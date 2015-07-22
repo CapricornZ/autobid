@@ -101,7 +101,7 @@
             this.button3.Location = new System.Drawing.Point(9, 49);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(54, 23);
-            this.button3.TabIndex = 5;
+            this.button3.TabIndex = 4;
             this.button3.Text = "&captcha";
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button3_Click);
@@ -111,14 +111,14 @@
             this.textBox2.Location = new System.Drawing.Point(6, 15);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(57, 20);
-            this.textBox2.TabIndex = 6;
+            this.textBox2.TabIndex = 3;
             // 
             // button4
             // 
             this.button4.Location = new System.Drawing.Point(69, 49);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(58, 23);
-            this.button4.TabIndex = 7;
+            this.button4.TabIndex = 5;
             this.button4.Text = "&price";
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
@@ -191,7 +191,7 @@
             this.textPoss.Location = new System.Drawing.Point(42, 46);
             this.textPoss.Name = "textPoss";
             this.textPoss.Size = new System.Drawing.Size(374, 20);
-            this.textPoss.TabIndex = 2;
+            this.textPoss.TabIndex = 7;
             this.textPoss.Text = "825,368;874,518;983,515;920,487;801,494;922,588";
             // 
             // textBox4
@@ -201,14 +201,14 @@
             this.textBox4.Name = "textBox4";
             this.textBox4.Size = new System.Drawing.Size(113, 20);
             this.textBox4.TabIndex = 1;
-            this.textBox4.Text = "/chapta.ws/receive/";
+            this.textBox4.Text = "/receive/";
             // 
             // textURL
             // 
             this.textURL.Location = new System.Drawing.Point(146, 12);
             this.textURL.Name = "textURL";
             this.textURL.Size = new System.Drawing.Size(151, 20);
-            this.textURL.TabIndex = 0;
+            this.textURL.TabIndex = 6;
             this.textURL.Text = "http://192.168.1.9:8080";
             // 
             // Form1

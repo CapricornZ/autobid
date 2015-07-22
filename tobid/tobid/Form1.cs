@@ -14,7 +14,6 @@ namespace tobid
 {
     public partial class Form1 : Form
     {
-        private OrcUtil m_orcPrice;
         public Form1()
         {
             InitializeComponent();
@@ -26,35 +25,15 @@ namespace tobid
             this.webBrowser1.Height = this.Size.Height - 98;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private OrcUtil m_orcPrice;
+        private System.Threading.Thread keeyAliveThread;
+        private System.Timers.Timer timer = new System.Timers.Timer();
+
+        private delegate void updateMouse(int x, int y);
+
+        private void update(int x, int y)
         {
-            //this.webBrowser1.Navigate("www.alltobid.com/guopai/contents/56/2050.html");
-            this.webBrowser1.Navigate("http://moni.51hupai.org:8081/");
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            HtmlElement number = this.webBrowser1.Document.Window.Frames[0].Document.All["number"];
-            number.SetAttribute("value", "123456");
-
-            HtmlElement idcard = this.webBrowser1.Document.Window.Frames[0].Document.All["idcard"];
-            idcard.SetAttribute("value", "1132");
-
-            //处理验证码
-            HtmlElement picCaptcha = this.webBrowser1.Document.Window.Frames[0].Document.Images["ImgValiCode"];
-            HTMLDocument doc = (HTMLDocument)this.webBrowser1.Document.Window.Frames[0].Document.DomDocument;
-            HTMLBody body = (HTMLBody)doc.body;
-            Image image = new DomUtil().GetWebImage(body, picCaptcha);
-            
-            HttpUtil httpUtil = new HttpUtil();
-            String txtCaptcha = httpUtil.postByteAsFile("http://192.168.1.5:8080/chapta.ws/upload.do", DomUtil.transferImage2Byte(image));
-
-            HtmlElement captcha = this.webBrowser1.Document.Window.Frames[0].Document.All["picValidCode"];
-            captcha.SetAttribute("value", txtCaptcha);
-            this.pictureBox1.Image = image;
-
-            HtmlElement query = this.webBrowser1.Document.Window.Frames[0].Document.All["btnquery"];
-            query.InvokeMember("click");
+            this.textBox1.Text = x + "," + y;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -80,6 +59,30 @@ namespace tobid
             this.textPoss.Text = poss;
 
             this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, @"G:\DICT\MONI\PRICE");
+
+            SchedulerConfiguration config = new SchedulerConfiguration(1000 * 60 * 5);
+            config.Job = new KeepAliveJob(url);
+            Scheduler scheduler = new Scheduler(config);
+            System.Threading.ThreadStart myThreadStart = new System.Threading.ThreadStart(scheduler.Start);
+            this.keeyAliveThread = new System.Threading.Thread(myThreadStart);
+            this.keeyAliveThread.Start();
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if(null != this.timer)
+                this.timer.Close();
+
+            Hotkey.UnregisterHotKey(this.Handle, 100);
+            Hotkey.UnregisterHotKey(this.Handle, 101);
+            Hotkey.UnregisterHotKey(this.Handle, 102);
+            Hotkey.UnregisterHotKey(this.Handle, 103);
+            Hotkey.UnregisterHotKey(this.Handle, 110);
+            Hotkey.UnregisterHotKey(this.Handle, 111);
+            Hotkey.UnregisterHotKey(this.Handle, 112);
+
+            if (null != this.keeyAliveThread)
+                this.keeyAliveThread.Abort();
         }
 
         protected override void WndProc(ref Message m)
@@ -124,24 +127,35 @@ namespace tobid
             base.WndProc(ref m);
         }
 
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        private void button1_Click(object sender, EventArgs e)
         {
-            this.timer.Close();
-
-            Hotkey.UnregisterHotKey(this.Handle, 100);
-            Hotkey.UnregisterHotKey(this.Handle, 101);
-            Hotkey.UnregisterHotKey(this.Handle, 102);
-            Hotkey.UnregisterHotKey(this.Handle, 103);
-            Hotkey.UnregisterHotKey(this.Handle, 110);
-            Hotkey.UnregisterHotKey(this.Handle, 111);
-            Hotkey.UnregisterHotKey(this.Handle, 112);
+            //this.webBrowser1.Navigate("www.alltobid.com/guopai/contents/56/2050.html");
+            this.webBrowser1.Navigate("http://moni.51hupai.org:8081/");
         }
 
-        System.Timers.Timer timer = new System.Timers.Timer();
-        private delegate void updateMouse(int x, int y);
-        private void update(int x, int y)
+        private void button2_Click(object sender, EventArgs e)
         {
-            this.textBox1.Text = x + "," + y;
+            HtmlElement number = this.webBrowser1.Document.Window.Frames[0].Document.All["number"];
+            number.SetAttribute("value", "123456");
+
+            HtmlElement idcard = this.webBrowser1.Document.Window.Frames[0].Document.All["idcard"];
+            idcard.SetAttribute("value", "1132");
+
+            //处理验证码
+            HtmlElement picCaptcha = this.webBrowser1.Document.Window.Frames[0].Document.Images["ImgValiCode"];
+            HTMLDocument doc = (HTMLDocument)this.webBrowser1.Document.Window.Frames[0].Document.DomDocument;
+            HTMLBody body = (HTMLBody)doc.body;
+            Image image = new DomUtil().GetWebImage(body, picCaptcha);
+            
+            HttpUtil httpUtil = new HttpUtil();
+            String txtCaptcha = httpUtil.postByteAsFile("http://192.168.1.5:8080/chapta.ws/upload.do", DomUtil.transferImage2Byte(image));
+
+            HtmlElement captcha = this.webBrowser1.Document.Window.Frames[0].Document.All["picValidCode"];
+            captcha.SetAttribute("value", txtCaptcha);
+            this.pictureBox1.Image = image;
+
+            HtmlElement query = this.webBrowser1.Document.Window.Frames[0].Document.All["btnquery"];
+            query.InvokeMember("click");
         }
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -150,7 +164,6 @@ namespace tobid
             Point screenPoint = Control.MousePosition;
             updateMouse update = new updateMouse(this.update);
             this.Invoke(update, new object[] { screenPoint.X, screenPoint.Y });
-
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -158,7 +171,7 @@ namespace tobid
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
-            String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/chapta.ws/receive/captcha.do", content);
+            String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha.do", content);
             this.label1.Text = txtCaptcha;
         }
 
@@ -287,7 +300,7 @@ namespace tobid
             this.pictureBox1.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
 
             System.Console.WriteLine("\t\tBEGIN postCaptcha - " + DateTime.Now.ToString());
-            String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/chapta.ws/receive/captcha.do", content);
+            String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", content);
             System.Console.WriteLine("\t\tEND postCaptcha - " + DateTime.Now.ToString());
 
             if (type == 0)
