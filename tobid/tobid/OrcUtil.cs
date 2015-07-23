@@ -74,6 +74,7 @@ namespace tobid
 
         public String getCharFromPic(Bitmap image)
         {
+            image.Save("xxx.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             StringBuilder sb = new StringBuilder();
             ImageTool it = new ImageTool();
             it.setImage(image);

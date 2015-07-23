@@ -45,6 +45,7 @@
             this.textPoss = new System.Windows.Forms.TextBox();
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.textURL = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
@@ -141,6 +142,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.textBox2);
             this.groupBox1.Controls.Add(this.pictureBox3);
@@ -148,7 +150,7 @@
             this.groupBox1.Controls.Add(this.button4);
             this.groupBox1.Location = new System.Drawing.Point(94, -1);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(200, 78);
+            this.groupBox1.Size = new System.Drawing.Size(247, 78);
             this.groupBox1.TabIndex = 10;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "测试用";
@@ -156,7 +158,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(149, 54);
+            this.label1.Location = new System.Drawing.Point(133, 53);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(35, 13);
             this.label1.TabIndex = 13;
@@ -205,11 +207,20 @@
             // 
             // textURL
             // 
-            this.textURL.Location = new System.Drawing.Point(146, 12);
+            this.textURL.Location = new System.Drawing.Point(100, 12);
             this.textURL.Name = "textURL";
-            this.textURL.Size = new System.Drawing.Size(151, 20);
+            this.textURL.Size = new System.Drawing.Size(197, 20);
             this.textURL.TabIndex = 6;
             this.textURL.Text = "http://192.168.1.9:8080";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(187, 53);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(35, 13);
+            this.label2.TabIndex = 14;
+            this.label2.Text = "label2";
             // 
             // Form1
             // 
@@ -259,6 +270,7 @@
         private System.Windows.Forms.TextBox textBox4;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox textPoss;
+        private System.Windows.Forms.Label label2;
     }
 }
 

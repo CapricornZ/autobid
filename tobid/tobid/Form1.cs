@@ -26,7 +26,10 @@ namespace tobid
         }
 
         private OrcUtil m_orcPrice;
+        private OrcUtil m_orcCaptchaTip;
+
         private System.Threading.Thread keeyAliveThread;
+        private System.Threading.Thread submitPriceThread;
         private System.Timers.Timer timer = new System.Timers.Timer();
 
         private delegate void updateMouse(int x, int y);
@@ -54,18 +57,29 @@ namespace tobid
             Ini ini = new Ini(Directory.GetCurrentDirectory() + "/config.ini");
             String url = ini.ReadValue("GLOBAL", "URL");
             String poss = ini.ReadValue("GLOBAL", "POSITIONS");
+            String priceDict = ini.ReadValue("GLOBAL", "PRICE_DICT");
+            String loadingDict = ini.ReadValue("GLOBAL", "LOAD_DICT");
 
             this.textURL.Text = url;
             this.textPoss.Text = poss;
 
-            this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, @"G:\DICT\MONI\PRICE");
+            this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
+            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
 
-            SchedulerConfiguration config = new SchedulerConfiguration(1000 * 60 * 5);
-            config.Job = new KeepAliveJob(url);
-            Scheduler scheduler = new Scheduler(config);
+            SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 5);
+            config5M.Job = new KeepAliveJob(url);
+            Scheduler scheduler = new Scheduler(config5M);
             System.Threading.ThreadStart myThreadStart = new System.Threading.ThreadStart(scheduler.Start);
             this.keeyAliveThread = new System.Threading.Thread(myThreadStart);
             this.keeyAliveThread.Start();
+
+            SchedulerConfiguration config1S = new SchedulerConfiguration(1000);
+            config1S.Job = new SubmitPriceJob(url, this.m_orcPrice);
+            Scheduler scheduler1S = new Scheduler(config1S);
+            System.Threading.ThreadStart submitPriceThreadStart = new System.Threading.ThreadStart(scheduler1S.Start);
+            this.submitPriceThread = new System.Threading.Thread(submitPriceThreadStart);
+            this.submitPriceThread.Start();
+
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -83,6 +97,8 @@ namespace tobid
 
             if (null != this.keeyAliveThread)
                 this.keeyAliveThread.Abort();
+            if (null != this.submitPriceThread)
+                this.submitPriceThread.Abort();
         }
 
         protected override void WndProc(ref Message m)
@@ -171,8 +187,10 @@ namespace tobid
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
+            String strTip = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
             String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha.do", content);
             this.label1.Text = txtCaptcha;
+            this.label2.Text = strTip;
         }
 
         private void button4_Click(object sender, EventArgs e)
