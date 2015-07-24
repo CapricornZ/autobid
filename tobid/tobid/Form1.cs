@@ -66,7 +66,7 @@ namespace tobid
             this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
             this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
 
-            SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 5);
+            SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 2);
             config5M.Job = new KeepAliveJob(url);
             Scheduler scheduler = new Scheduler(config5M);
             System.Threading.ThreadStart myThreadStart = new System.Threading.ThreadStart(scheduler.Start);
@@ -189,6 +189,7 @@ namespace tobid
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
             String strTip = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
             String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha.do", content);
+
             this.label1.Text = txtCaptcha;
             this.label2.Text = strTip;
         }
@@ -202,6 +203,10 @@ namespace tobid
             //String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/chapta.ws/receive/price.do", content);
             //OrcUtil orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, @"G:\DICT\MONI\PRICE");
             String txtPrice = this.m_orcPrice.getCharFromPic(new Bitmap(this.pictureBox3.Image));
+            this.pictureBox4.Image = this.m_orcPrice.SubImgs[0];
+            this.pictureBox5.Image = this.m_orcPrice.SubImgs[1];
+            this.pictureBox6.Image = this.m_orcPrice.SubImgs[2];
+            this.pictureBox7.Image = this.m_orcPrice.SubImgs[3];
             this.label1.Text = txtPrice;
             System.Console.WriteLine(String.Format("{0} -- end TEST PRICE --", DateTime.Now.ToString("HH:mm:ss.ffff")));
         }

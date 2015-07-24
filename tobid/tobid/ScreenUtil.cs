@@ -41,6 +41,7 @@ namespace tobid
             keycode.Add("9", 57);
             keycode.Add("BACKSPACE", 0x8);
             keycode.Add("DELETE", 0x2e);
+            keycode.Add("+", 48);
         }
 
         [DllImport("user32.dll")]

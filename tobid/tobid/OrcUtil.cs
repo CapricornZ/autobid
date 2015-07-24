@@ -74,6 +74,7 @@ namespace tobid
 
         public String getCharFromPic(Bitmap image)
         {
+            this.subImgs = new List<Bitmap>();
             image.Save("xxx.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             StringBuilder sb = new StringBuilder();
             ImageTool it = new ImageTool();
@@ -83,11 +84,18 @@ namespace tobid
 
                 Rectangle cloneRect = new Rectangle(this.offsetX[i], this.offsetY, this.width, this.height);
                 Bitmap subImg = it.Image.Clone(cloneRect, it.Image.PixelFormat);
-                subImg.Save(String.Format("{0:D2}.jpg", i));
+                //subImg.Save(String.Format("{0:D2}.jpg", i));
+                this.subImgs.Add(subImg);
                 String s = OrcUtil.getSingleChar(subImg, this.dict);
                 sb.Append(s);
             }
             return sb.ToString();
+        }
+
+        private List<Bitmap> subImgs;
+        public List<Bitmap> SubImgs
+        {
+            get { return this.subImgs; }
         }
     }
 
