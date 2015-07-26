@@ -6,6 +6,45 @@ using System.Drawing;
 
 namespace tobid
 {
+    public class CaptchaUtil
+    {
+        private IDictionary<Bitmap, String> dict;
+        public CaptchaUtil(String dictPath)
+        {
+            this.dict = new Dictionary<Bitmap, String>();
+            String[] files = System.IO.Directory.GetFiles(dictPath);
+            foreach (String file in files)
+            {
+                String name = new System.IO.FileInfo(file).Name;
+                String[] array = name.Split(new char[] { '.' });
+                Bitmap bitmap = new Bitmap(file);
+                this.dict.Add(bitmap, array[0]);
+            }
+        }
+        
+        public String getActive(String captcha, OrcUtil orcTips, Bitmap bitMap)
+        {
+            String txt = orcTips.getCharFromPic(bitMap);
+            Rectangle rectStart = new Rectangle(64, 0, 7, 16);
+            Bitmap imgStart = bitMap.Clone(rectStart, bitMap.PixelFormat);
+            String start = OrcUtil.getSingleChar(imgStart, this.dict);
+
+            if ("第".Equals(txt[3]))
+            {
+                Rectangle rectEnd = new Rectangle(88, 0, 7, 16);
+                Bitmap imgEnd = bitMap.Clone(rectEnd, bitMap.PixelFormat);
+                String end = OrcUtil.getSingleChar(imgEnd, this.dict);
+
+                return captcha.Substring(Int16.Parse(start) - 1, Int16.Parse(end) - Int16.Parse(start) + 1);
+            }
+            else if ("前".Equals(txt[3]))
+                return captcha.Substring(0, Int16.Parse(start));
+            else if ("后".Equals(txt[3]))
+                return captcha.Substring(captcha.Length - Int16.Parse(start), Int16.Parse(start));
+            return "";
+        }
+    }
+
     public class OrcUtil
     {
         static public String getSingleChar(Bitmap img, IDictionary<Bitmap, String> dict)
@@ -16,7 +55,9 @@ namespace tobid
             int min = width * height;
             foreach (Bitmap bi in dict.Keys)
             {
-
+                if (width > bi.Width || height > bi.Height)
+                    continue;
+                
                 int count = 0;
                 for (int x = 0; x < width; ++x)
                     for (int y = 0; y < height; ++y)

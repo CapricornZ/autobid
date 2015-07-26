@@ -26,6 +26,7 @@ namespace tobid
         }
 
         private OrcUtil m_orcPrice;
+        private OrcUtil m_orcCaptchaLoading;
         private OrcUtil m_orcCaptchaTip;
 
         private System.Threading.Thread keeyAliveThread;
@@ -50,35 +51,37 @@ namespace tobid
             Hotkey.RegisterHotKey(this.Handle, 101, Hotkey.KeyModifiers.Ctrl, Keys.D4);
             Hotkey.RegisterHotKey(this.Handle, 102, Hotkey.KeyModifiers.Ctrl, Keys.D5);
             Hotkey.RegisterHotKey(this.Handle, 103, Hotkey.KeyModifiers.Ctrl, Keys.D6);
-            Hotkey.RegisterHotKey(this.Handle, 111, Hotkey.KeyModifiers.Ctrl, Keys.A);
-            Hotkey.RegisterHotKey(this.Handle, 110, Hotkey.KeyModifiers.Ctrl, Keys.S);
-            Hotkey.RegisterHotKey(this.Handle, 112, Hotkey.KeyModifiers.Ctrl, Keys.D);
+            Hotkey.RegisterHotKey(this.Handle, 111, Hotkey.KeyModifiers.Ctrl, Keys.Left);
+            Hotkey.RegisterHotKey(this.Handle, 110, Hotkey.KeyModifiers.Ctrl, Keys.Up);
+            Hotkey.RegisterHotKey(this.Handle, 112, Hotkey.KeyModifiers.Ctrl, Keys.Right);
 
             Ini ini = new Ini(Directory.GetCurrentDirectory() + "/config.ini");
             String url = ini.ReadValue("GLOBAL", "URL");
             String poss = ini.ReadValue("GLOBAL", "POSITIONS");
             String priceDict = ini.ReadValue("GLOBAL", "PRICE_DICT");
             String loadingDict = ini.ReadValue("GLOBAL", "LOAD_DICT");
+            String tipDict = ini.ReadValue("GLOBAL", "TIP_DICT");
 
             this.textURL.Text = url;
             this.textPoss.Text = poss;
 
             this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
-            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
+            this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
+            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
 
             SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 2);
             config5M.Job = new KeepAliveJob(url);
             Scheduler scheduler = new Scheduler(config5M);
             System.Threading.ThreadStart myThreadStart = new System.Threading.ThreadStart(scheduler.Start);
             this.keeyAliveThread = new System.Threading.Thread(myThreadStart);
-            this.keeyAliveThread.Start();
+            //this.keeyAliveThread.Start();
 
             SchedulerConfiguration config1S = new SchedulerConfiguration(1000);
             config1S.Job = new SubmitPriceJob(url, this.m_orcPrice);
             Scheduler scheduler1S = new Scheduler(config1S);
             System.Threading.ThreadStart submitPriceThreadStart = new System.Threading.ThreadStart(scheduler1S.Start);
             this.submitPriceThread = new System.Threading.Thread(submitPriceThreadStart);
-            this.submitPriceThread.Start();
+            //this.submitPriceThread.Start();
 
         }
 
@@ -125,15 +128,15 @@ namespace tobid
                             System.Console.WriteLine("HOT KEY 103");
                             this.wholeProcess(600);
                             break;
-                        case 110://CTRL+S
+                        case 110://CTRL+UP
                             System.Console.WriteLine("HOT KEY 110");
                             this.process(1);
                             break;
-                        case 111://CTRL+A
+                        case 111://CTRL+LEFT
                             System.Console.WriteLine("HOT KEY 111");
                             this.process(0);
                             break;
-                        case 112://CTRL+D
+                        case 112://CTRL+RIGHT
                             System.Console.WriteLine("HOT KEY 112");
                             this.process(2);
                             break;
@@ -146,7 +149,8 @@ namespace tobid
         private void button1_Click(object sender, EventArgs e)
         {
             //this.webBrowser1.Navigate("www.alltobid.com/guopai/contents/56/2050.html");
-            this.webBrowser1.Navigate("http://moni.51hupai.org:8081/");
+            //this.webBrowser1.Navigate("http://moni.51hupai.org:8081/");
+            //this.label2.Text = strTip;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -182,26 +186,42 @@ namespace tobid
             this.Invoke(update, new object[] { screenPoint.X, screenPoint.Y });
         }
 
+        /// <summary>
+        /// 测试验证码
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button3_Click(object sender, EventArgs e)
         {
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
-            String strTip = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
-            String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha.do", content);
+            //String strTip = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
+            String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha/detail.do", content);
+            String[] array = Newtonsoft.Json.JsonConvert.DeserializeObject<String[]>(txtCaptcha);
 
-            this.label1.Text = txtCaptcha;
-            this.label2.Text = strTip;
+            this.pictureBox4.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[0])));
+            this.pictureBox5.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[1])));
+            this.pictureBox6.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[2])));
+            this.pictureBox7.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[3])));
+            this.pictureBox8.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[4])));
+            this.pictureBox9.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[5])));
+
+            this.label1.Text = array[6];
+            //this.label2.Text = strTip;
         }
 
+        /// <summary>
+        /// 测试价格
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button4_Click(object sender, EventArgs e)
         {
             System.Console.WriteLine(String.Format("{0} -- start TEST PRICE --", DateTime.Now.ToString("HH:mm:ss.ffff")));
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 100, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
-            //String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/chapta.ws/receive/price.do", content);
-            //OrcUtil orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, @"G:\DICT\MONI\PRICE");
             String txtPrice = this.m_orcPrice.getCharFromPic(new Bitmap(this.pictureBox3.Image));
             this.pictureBox4.Image = this.m_orcPrice.SubImgs[0];
             this.pictureBox5.Image = this.m_orcPrice.SubImgs[1];
@@ -209,6 +229,26 @@ namespace tobid
             this.pictureBox7.Image = this.m_orcPrice.SubImgs[3];
             this.label1.Text = txtPrice;
             System.Console.WriteLine(String.Format("{0} -- end TEST PRICE --", DateTime.Now.ToString("HH:mm:ss.ffff")));
+        }
+
+        /// <summary>
+        /// 测试验证码提示
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button5_Click(object sender, EventArgs e)
+        {
+            System.Console.WriteLine(String.Format("{0} -- start TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
+            String[] pos = this.textBox2.Text.Split(new char[] { ',' });
+            byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 100, 24);
+            this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
+            String txtTips = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(this.pictureBox3.Image));
+            this.pictureBox4.Image = this.m_orcCaptchaTip.SubImgs[0];
+            this.pictureBox5.Image = this.m_orcCaptchaTip.SubImgs[1];
+            this.pictureBox6.Image = this.m_orcCaptchaTip.SubImgs[2];
+            this.pictureBox7.Image = this.m_orcCaptchaTip.SubImgs[3];
+            this.label1.Text = txtTips;
+            System.Console.WriteLine(String.Format("{0} -- end TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
         }
 
         private class Util

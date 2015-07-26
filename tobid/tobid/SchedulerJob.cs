@@ -99,8 +99,8 @@ namespace tobid
 
                     rest.GivePrice givePrice = new rest.GivePrice();
                     givePrice.price = new System.Drawing.Point(1156, 352);
-                    givePrice.input = new System.Drawing.Point(1189, 496);
-                    givePrice.click = new System.Drawing.Point(1312, 500);
+                    givePrice.inputBox = new System.Drawing.Point(1189, 496);
+                    givePrice.button = new System.Drawing.Point(1312, 500);
 
                     byte[] content = new ScreenUtil().screenCaptureAsByte(givePrice.price.X, givePrice.price.Y, 52, 18);
                     //this.pictureBox2.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
@@ -112,7 +112,7 @@ namespace tobid
                     price += deltaPrice;
                     txtPrice = String.Format("{0:D}", price);
 
-                    ScreenUtil.SetCursorPos(givePrice.input.X, givePrice.input.Y);
+                    ScreenUtil.SetCursorPos(givePrice.inputBox.X, givePrice.inputBox.Y);
                     ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
                     System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
@@ -135,7 +135,7 @@ namespace tobid
 
                     //点击出价
                     System.Threading.Thread.Sleep(50);
-                    ScreenUtil.SetCursorPos(givePrice.click.X, givePrice.click.Y);
+                    ScreenUtil.SetCursorPos(givePrice.button.X, givePrice.button.Y);
                     ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
                     this.submit(this.EndPoint, new Point[] { new Point(1249,469), new Point(1166,478), new Point(1063,567)}, 1);

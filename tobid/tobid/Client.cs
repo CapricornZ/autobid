@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Drawing;
 
 namespace tobid.rest
 {
+    /// <summary>
+    /// 客户机信息
+    /// </summary>
     public class Client
     {
         public String ip
@@ -26,6 +30,9 @@ namespace tobid.rest
         }
     }
 
+    /// <summary>
+    /// 配置信息
+    /// </summary>
     public class Config
     {
         public String no
@@ -73,22 +80,19 @@ namespace tobid.rest
 
     public class GivePrice
     {
-        public System.Drawing.Point price
-        {
-            get;
-            set;
-        }
+        public Point price { get; set; }
 
-        public System.Drawing.Point input
-        {
-            get;
-            set;
-        }
+        public Point inputBox { get; set; }
 
-        public System.Drawing.Point click
-        {
-            get;
-            set;
-        }
+        public Point button { get; set; }
+    }
+
+    public class SubmitPrice
+    {
+        public Point[] captcha { get; set; }
+
+        public Point inputBox { get; set; }
+
+        public Point[] buttons { get; set; }
     }
 }
