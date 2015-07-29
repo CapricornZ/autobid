@@ -52,6 +52,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BidDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BidDialog.Designer.cs">
+      <DependentUpon>BidDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Client.cs" />
     <Compile Include="DomUtil.cs" />
     <Compile Include="Form1.cs">
@@ -70,6 +76,9 @@
     <Compile Include="Scheduler.cs" />
     <Compile Include="SchedulerJob.cs" />
     <Compile Include="ScreenUtil.cs" />
+    <EmbeddedResource Include="BidDialog.resx">
+      <DependentUpon>BidDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

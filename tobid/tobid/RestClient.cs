@@ -23,45 +23,36 @@ namespace tobid
         public string ContentType { get; set; }
         public string PostData { get; set; }
 
-        public RestClient()
-        {
-            EndPoint = "";
-            Method = HttpVerb.GET;
-            ContentType = "text/xml";
-            PostData = "";
-        }
-        public RestClient(string endpoint)
-        {
-            EndPoint = endpoint;
-            Method = HttpVerb.GET;
-            ContentType = "text/xml";
-            PostData = "";
-        }
         public RestClient(string endpoint, HttpVerb method)
         {
-            EndPoint = endpoint;
-            Method = method;
-            ContentType = "text/xml";
-            PostData = "";
+            this.EndPoint = endpoint;
+            this.Method = method;
+            this.ContentType = "text/xml";
+            this.PostData = "";
         }
-
         public RestClient(string endpoint, HttpVerb method, string postData)
         {
-            EndPoint = endpoint;
-            Method = method;
-            ContentType = "text/xml";
-            PostData = postData;
+            this.EndPoint = endpoint;
+            this.Method = method;
+            this.ContentType = "text/xml";
+            this.PostData = postData;
         }
-
+        public RestClient(string endpoint, HttpVerb method, Object postObj)
+        {
+            this.EndPoint = endpoint;
+            this.Method = method;
+            this.ContentType = "application/json;charset=UTF-8";
+            this.PostData = Newtonsoft.Json.JsonConvert.SerializeObject(postObj);
+        }
 
         public string MakeRequest()
         {
-            return MakeRequest("");
+            return MakeRequest(null);
         }
 
         public string MakeRequest(string parameters)
         {
-            var request = (HttpWebRequest)WebRequest.Create(EndPoint + parameters);
+            var request = (HttpWebRequest)WebRequest.Create(parameters == null ? EndPoint : EndPoint+parameters);
 
             request.Method = Method.ToString();
             request.ContentLength = 0;
@@ -70,7 +61,8 @@ namespace tobid
             if (!string.IsNullOrEmpty(PostData) && Method == HttpVerb.POST)
             {
                 var encoding = new UTF8Encoding();
-                var bytes = Encoding.GetEncoding("iso-8859-1").GetBytes(PostData);
+                //var bytes = Encoding.GetEncoding("iso-8859-1").GetBytes(PostData);
+                var bytes = Encoding.GetEncoding("utf-8").GetBytes(PostData);
                 request.ContentLength = bytes.Length;
 
                 using (var writeStream = request.GetRequestStream())

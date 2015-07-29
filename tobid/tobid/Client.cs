@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Drawing;
 
 namespace tobid.rest
 {
@@ -11,23 +10,10 @@ namespace tobid.rest
     /// </summary>
     public class Client
     {
-        public String ip
-        {
-            get;
-            set;
-        }
-
-        public DateTime updateTime
-        {
-            get;
-            set;
-        }
-
-        public Config config
-        {
-            get;
-            set;
-        }
+        public String ip { get;set; }
+        public DateTime updateTime { get; set; }
+        public Config config { get; set; }
+        public Operation[] operation { get; set; }
     }
 
     /// <summary>
@@ -35,64 +21,53 @@ namespace tobid.rest
     /// </summary>
     public class Config
     {
-        public String no
-        {
-            get;
-            set;
-        }
-
-        public String passwd
-        {
-            get;
-            set;
-        }
-
-        public String pid
-        {
-            get;
-            set;
-        }
-
-        public String pname
-        {
-            get;
-            set;
-        }
-
-        public DateTime startTime
-        {
-            get;
-            set;
-        }
-
-        public DateTime expireTime
-        {
-            get;
-            set;
-        }
-
-        public DateTime updateTime
-        {
-            get;
-            set;
-        }
+        public String no { get; set; }
+        public String passwd { get; set; }
+        public String pid { get; set; }
+        public String pname { get; set; }
+        public DateTime startTime { get; set; }
+        public DateTime expireTime { get; set;}
+        public DateTime updateTime { get; set; }
     }
 
+    public class Operation
+    {
+        public int id { get; set; }
+        public String type { get; set; }
+        public String content { get; set; }
+        private DateTime updateTime { get; set; }
+    }
+
+    public class Position
+    {
+        public Position(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+        public int x { get; set; }
+        public int y { get; set; }
+    }
     public class GivePrice
     {
-        public Point price { get; set; }
-
-        public Point inputBox { get; set; }
-
-        public Point button { get; set; }
+        public Position price { get; set; }
+        public Position inputBox { get; set; }
+        public Position button { get; set; }
     }
 
     public class SubmitPrice
     {
-        public Point[] captcha { get; set; }
+        public Position[] captcha { get; set; }
+        public Position inputBox { get; set; }
+        public Position[] buttons { get; set; }
+    }
 
-        public Point inputBox { get; set; }
-
-        public Point[] buttons { get; set; }
+    /// <summary>
+    /// 竞价
+    /// </summary>
+    public class Bid
+    {
+        public GivePrice give { get; set; }
+        public SubmitPrice submit { get; set; }
     }
 }

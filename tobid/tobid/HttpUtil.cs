@@ -75,6 +75,7 @@ namespace tobid
             }
             catch (Exception ex)
             {
+                System.Windows.Forms.MessageBox.Show(ex.ToString());
                 returnValue = "++++++";
             }
             finally
@@ -173,6 +174,7 @@ namespace tobid
             }
             catch (Exception ex)
             {
+                System.Windows.Forms.MessageBox.Show(ex.ToString());
                 returnValue = "++++++";
             }
             finally
