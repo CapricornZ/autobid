@@ -30,6 +30,7 @@ namespace tobid
 
     public class Scheduler
     {
+        private int no = 0;
         private SchedulerConfiguration configuration = null;
 
         public Scheduler(SchedulerConfiguration config)
@@ -38,16 +39,23 @@ namespace tobid
         }
 
         public void Start()
-        {
+        {   
             while (true)
             {
                 //执行每一个任务
                 //foreach (ISchedulerJob job in configuration.Jobs)
+                try
                 {
                     ThreadStart myThreadDelegate = new ThreadStart(this.configuration.Job.Execute);
                     Thread myThread = new Thread(myThreadDelegate);
+                    myThread.Name = String.Format("{0}-{1}", Thread.CurrentThread.Name, ++no);
                     myThread.Start();
                     Thread.Sleep(this.configuration.SleepInterval);
+                }
+                catch (ThreadAbortException abortException)
+                {
+                    System.Console.WriteLine(abortException);
+                    return;
                 }
             }
         }

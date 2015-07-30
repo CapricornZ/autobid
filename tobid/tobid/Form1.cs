@@ -30,11 +30,15 @@ namespace tobid
         private OrcUtil m_orcPrice;
         private OrcUtil m_orcCaptchaLoading;
         private OrcUtil m_orcCaptchaTip;
+        private OrcUtil m_orcCaptchaTipNo;
+        private CaptchaUtil m_orcCaptchaUtil;
 
-        private System.Threading.Thread keeyAliveThread;
+        private System.Threading.Thread keepAliveThread;
         private System.Threading.Thread submitPriceThread;
         private System.Timers.Timer timer = new System.Timers.Timer();
 
+        private Scheduler m_schedulerKeepAlive;
+        private Scheduler m_schedulerSubmit;
         private delegate void updateMouse(int x, int y);
 
         private void update(int x, int y)
@@ -70,19 +74,21 @@ namespace tobid
             this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
             this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
             this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
+            this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, tipDict + "/no");
+            this.m_orcCaptchaUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
 
             SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 2);
             config5M.Job = new KeepAliveJob(url, new ReceiveOperation(this.receiveOperation));
-            Scheduler scheduler = new Scheduler(config5M);
-            System.Threading.ThreadStart myThreadStart = new System.Threading.ThreadStart(scheduler.Start);
-            this.keeyAliveThread = new System.Threading.Thread(myThreadStart);
+            m_schedulerKeepAlive = new Scheduler(config5M);
+            //System.Threading.ThreadStart myThreadStart = new System.Threading.ThreadStart(m_schedulerKeepAlive.Start);
+            //this.keeyAliveThread = new System.Threading.Thread(myThreadStart);
             //this.keeyAliveThread.Start();
 
             SchedulerConfiguration config1S = new SchedulerConfiguration(1000);
-            config1S.Job = new SubmitPriceJob(url, this.m_orcPrice);
-            Scheduler scheduler1S = new Scheduler(config1S);
-            System.Threading.ThreadStart submitPriceThreadStart = new System.Threading.ThreadStart(scheduler1S.Start);
-            this.submitPriceThread = new System.Threading.Thread(submitPriceThreadStart);
+            config1S.Job = new SubmitPriceJob(url, this.m_orcPrice, this.m_orcCaptchaUtil);
+            m_schedulerSubmit = new Scheduler(config1S);
+            //System.Threading.ThreadStart submitPriceThreadStart = new System.Threading.ThreadStart(m_schedulerSubmit.Start);
+            //this.submitPriceThread = new System.Threading.Thread(submitPriceThreadStart);
             //this.submitPriceThread.Start();
         }
 
@@ -99,8 +105,8 @@ namespace tobid
             Hotkey.UnregisterHotKey(this.Handle, 111);
             Hotkey.UnregisterHotKey(this.Handle, 112);
 
-            if (null != this.keeyAliveThread)
-                this.keeyAliveThread.Abort();
+            if (null != this.keepAliveThread)
+                this.keepAliveThread.Abort();
             if (null != this.submitPriceThread)
                 this.submitPriceThread.Abort();
         }
@@ -265,7 +271,9 @@ namespace tobid
             this.pictureBox5.Image = this.m_orcCaptchaTip.SubImgs[1];
             this.pictureBox6.Image = this.m_orcCaptchaTip.SubImgs[2];
             this.pictureBox7.Image = this.m_orcCaptchaTip.SubImgs[3];
+            
             this.label1.Text = txtTips;
+            this.label2.Text = this.m_orcCaptchaUtil.getActive("123456", new Bitmap(new MemoryStream(content)));
             System.Console.WriteLine(String.Format("{0} -- end TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
         }
 
@@ -439,9 +447,11 @@ namespace tobid
         {
             if (positionDialog.bid != null)
             {   
-                string endpoint = this.textURL.Text + "/command/operation/BID/accept.do";
+                //string endpoint = this.textURL.Text + "/command/operation/BID/accept.do";
+                string hostName = System.Net.Dns.GetHostName();
+                string endpoint = this.textURL.Text + "/command/operation/screenconfig/BID/accept.do";
                 RestClient rest = new RestClient(endpoint: endpoint, method: HttpVerb.POST, postObj: this.positionDialog.bid);
-                String response = rest.MakeRequest();
+                String response = rest.MakeRequest("?fromHost=" + hostName);
             }
         }
 
@@ -456,22 +466,23 @@ namespace tobid
         {
             if (this.radioButton1.Checked)
             {
-                this.keeyAliveThread.Abort();
+                this.keepAliveThread.Abort();
                 this.submitPriceThread.Abort();
             }
-
-            //SchedulerConfiguration config1S = new SchedulerConfiguration(1000);
-            //config1S.Job = new SubmitPriceJob(url, this.m_orcPrice);
-            //Scheduler scheduler1S = new Scheduler(config1S);
-            //System.Threading.ThreadStart submitPriceThreadStart = new System.Threading.ThreadStart(scheduler1S.Start);
-            //this.submitPriceThread = new System.Threading.Thread(submitPriceThreadStart);
         }
 
         private void radioButton2_CheckedChanged(object sender, EventArgs e)
         {
             if (this.radioButton2.Checked)
             {
-                this.keeyAliveThread.Start();
+                System.Threading.ThreadStart keepAliveThread = new System.Threading.ThreadStart(this.m_schedulerKeepAlive.Start);
+                this.keepAliveThread = new System.Threading.Thread(keepAliveThread);
+                this.keepAliveThread.Name = "keepAliveThread";
+                this.keepAliveThread.Start();
+
+                System.Threading.ThreadStart submitPriceThreadStart = new System.Threading.ThreadStart(this.m_schedulerSubmit.Start);
+                this.submitPriceThread = new System.Threading.Thread(submitPriceThreadStart);
+                this.submitPriceThread.Name = "submitPriceThread";
                 this.submitPriceThread.Start();
             }
         }

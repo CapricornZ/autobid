@@ -32,13 +32,13 @@ namespace tobid
 
         public void Execute()
         {
-            System.Console.WriteLine(String.Format("{0} KeepAliveJob.Execute()", DateTime.Now));
+            System.Console.WriteLine(String.Format("{0} - {1} KeepAliveJob.Execute()", Thread.CurrentThread.Name, DateTime.Now));
             string hostName = System.Net.Dns.GetHostName();
             String epKeepAlive = this.EndPoint + "/command/keepAlive.do";
             RestClient restKeepAlive = new RestClient(endpoint: epKeepAlive, method: HttpVerb.POST);
             String rtn = restKeepAlive.MakeRequest(String.Format("?ip={0}", hostName));
             tobid.rest.Client client = Newtonsoft.Json.JsonConvert.DeserializeObject<tobid.rest.Client>(rtn);
-            if (null != client.config && client.operation != null)
+            if (null != client.config && client.operation != null && client.operation.Length > 0)
             {
                 SubmitPriceJob.setConfig(client.config.startTime, client.config.expireTime, 300, client.operation[0]);
                 this.receiveOperation(client.operation[0]);
@@ -60,12 +60,12 @@ namespace tobid
         private static int executeCount = 1;
 
         private OrcUtil m_orcPrice;
-        private OrcUtil m_orcCaptchaTip;
-
-        public SubmitPriceJob(String endPoint, OrcUtil orcUtil)
+        private CaptchaUtil m_captchaUtil;
+        public SubmitPriceJob(String endPoint, OrcUtil orcUtil, CaptchaUtil captchaUtil)
         {
             this.EndPoint = endPoint;
             this.m_orcPrice = orcUtil;
+            this.m_captchaUtil = captchaUtil;
         }
 
         public static void setConfig(DateTime startTime, DateTime expireTime, int deltaPrice, rest.Operation operation)
@@ -90,54 +90,17 @@ namespace tobid
         public void Execute(){
 
             DateTime now = DateTime.Now;
-            System.Console.WriteLine("NOW : " + now);
-            System.Console.WriteLine("ExpireTime : " + SubmitPriceJob.expireTime);
-            System.Console.WriteLine("ExecuteCount : " + SubmitPriceJob.executeCount);
+            System.Console.WriteLine(String.Format("{0} - NOW:{1}, {{Expire:{2}, Count:{3}}}", Thread.CurrentThread.Name, now, SubmitPriceJob.expireTime, SubmitPriceJob.executeCount));
             if (Monitor.TryEnter(SubmitPriceJob.lockObj, 500))
             {
                 if (now >= SubmitPriceJob.startTime && now <= SubmitPriceJob.expireTime && SubmitPriceJob.executeCount==0)
                 {
                     SubmitPriceJob.executeCount++;
-
                     System.Console.WriteLine("trigger Fired");
-                    String epPostCaptcha = this.EndPoint + "/receive/captcha.do";
 
-                    rest.GivePrice givePrice = SubmitPriceJob.operation.give;
-
-                    byte[] content = new ScreenUtil().screenCaptureAsByte(givePrice.price.x, givePrice.price.y, 52, 18);
-                    System.Console.WriteLine("\t\tBEGIN postPrice - " + DateTime.Now.ToString());
-                    String txtPrice = this.m_orcPrice.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
-                    System.Console.WriteLine("\t\tEND postPrice - " + DateTime.Now.ToString());
-                    int price = Int32.Parse(txtPrice);
-                    price += deltaPrice;
-                    txtPrice = String.Format("{0:D}", price);
-
-                    ScreenUtil.SetCursorPos(givePrice.inputBox.x, givePrice.inputBox.y);
-                    ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
-
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
-
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
-                    System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
-
-                    for (int i = 0; i < txtPrice.Length; i++)
-                    {
-                        System.Threading.Thread.Sleep(50);
-                        ScreenUtil.keybd_event(ScreenUtil.keycode[txtPrice[i].ToString()], 0, 0, 0);
-                    }
-
-                    //点击出价
-                    System.Threading.Thread.Sleep(50);
-                    ScreenUtil.SetCursorPos(givePrice.button.x, givePrice.button.y);
-                    ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
-
+                    //出价
+                    this.givePrice(SubmitPriceJob.operation.give, deltaPrice);
+                    //提交
                     this.submit(this.EndPoint, SubmitPriceJob.operation.submit);
                 }
                 
@@ -149,9 +112,21 @@ namespace tobid
             }
         }
 
-        private void submit(String URL, rest.SubmitPrice points)
+        /// <summary>
+        /// 获取当前价格，+delta，出价
+        /// </summary>
+        /// <param name="givePrice">坐标</param>
+        /// <param name="delta">差价</param>
+        private void givePrice(rest.GivePrice givePrice, int delta)
         {
-            ScreenUtil.SetCursorPos(points.inputBox.x, points.inputBox.y);
+            byte[] content = new ScreenUtil().screenCaptureAsByte(givePrice.price.x, givePrice.price.y, 52, 18);
+            String txtPrice = this.m_orcPrice.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
+            int price = Int32.Parse(txtPrice);
+            price += delta;
+            txtPrice = String.Format("{0:D}", price);
+
+            //INPUT BOX
+            ScreenUtil.SetCursorPos(givePrice.inputBox.x, givePrice.inputBox.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
@@ -166,22 +141,52 @@ namespace tobid
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
 
-            byte[] content = new ScreenUtil().screenCaptureAsByte(points.captcha[0].x, points.captcha[0].y, 108, 28);
+            for (int i = 0; i < txtPrice.Length; i++)
+            {
+                System.Threading.Thread.Sleep(50);
+                ScreenUtil.keybd_event(ScreenUtil.keycode[txtPrice[i].ToString()], 0, 0, 0);
+            }
+
+            //点击出价
+            System.Threading.Thread.Sleep(50);
+            ScreenUtil.SetCursorPos(givePrice.button.x, givePrice.button.y);
+            ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+        }
+
+        private void submit(String URL, rest.SubmitPrice submitPoints)
+        {
+            ScreenUtil.SetCursorPos(submitPoints.inputBox.x, submitPoints.inputBox.y);
+            ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
+
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
+            System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
+
+            byte[] binaryCaptcha = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[0].x, submitPoints.captcha[0].y, 108, 28);
             System.Console.WriteLine("\t\tBEGIN postCaptcha - " + DateTime.Now.ToString());
-            String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", content);
+            String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", binaryCaptcha);
             System.Console.WriteLine("\t\tEND postCaptcha - " + DateTime.Now.ToString());
 
+            byte[] binaryTips = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[1].x, submitPoints.captcha[1].y, 112, 16);
+            String strActive = this.m_captchaUtil.getActive(txtCaptcha, new Bitmap(new System.IO.MemoryStream(binaryTips)));
             
             {
-                for (int i = 1; i < 5; i++)
+                for (int i = 0; i < strActive.Length; i++)
                 {
-                    ScreenUtil.keybd_event(ScreenUtil.keycode[txtCaptcha[i].ToString()], 0, 0, 0);
+                    ScreenUtil.keybd_event(ScreenUtil.keycode[strActive[i].ToString()], 0, 0, 0);
                     System.Threading.Thread.Sleep(50);
                 }
             }
 
-            System.Console.WriteLine("\t\tEND inputCaptcha - " + DateTime.Now.ToString());
-            ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);
+            ScreenUtil.SetCursorPos(submitPoints.buttons[0].x, submitPoints.buttons[0].y);
             //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
             //System.Threading.Thread.Sleep(3000);

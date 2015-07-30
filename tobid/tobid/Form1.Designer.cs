@@ -289,7 +289,7 @@
             this.groupBox3.Size = new System.Drawing.Size(381, 78);
             this.groupBox3.TabIndex = 12;
             this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "配置项";
+            this.groupBox3.Text = "配置项(ADM)";
             // 
             // label3
             // 
@@ -354,6 +354,7 @@
             // 
             // textURL
             // 
+            this.textURL.Enabled = false;
             this.textURL.Location = new System.Drawing.Point(57, 12);
             this.textURL.Name = "textURL";
             this.textURL.Size = new System.Drawing.Size(197, 20);

@@ -35,6 +35,8 @@ namespace tobid.rest
         public int id { get; set; }
         public String type { get; set; }
         public String content { get; set; }
+        private DateTime startTime { get; set; }
+        private DateTime expireTime { get; set; }
         private DateTime updateTime { get; set; }
     }
 

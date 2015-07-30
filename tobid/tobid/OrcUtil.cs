@@ -6,45 +6,40 @@ using System.Drawing;
 
 namespace tobid
 {
+    /// <summary>
+    /// 根据提示获取有效验证码
+    /// </summary>
     public class CaptchaUtil
     {
-        private IDictionary<Bitmap, String> dict;
-        public CaptchaUtil(String dictPath)
+        private OrcUtil orcTips, orcNo;
+        public CaptchaUtil(OrcUtil tips, OrcUtil no)
         {
-            this.dict = new Dictionary<Bitmap, String>();
-            String[] files = System.IO.Directory.GetFiles(dictPath);
-            foreach (String file in files)
-            {
-                String name = new System.IO.FileInfo(file).Name;
-                String[] array = name.Split(new char[] { '.' });
-                Bitmap bitmap = new Bitmap(file);
-                this.dict.Add(bitmap, array[0]);
-            }
+            this.orcNo = no;
+            this.orcTips = tips;
         }
-        
-        public String getActive(String captcha, OrcUtil orcTips, Bitmap bitMap)
+
+        public String getActive(String captcha, Bitmap bitmapTips)
         {
-            String txt = orcTips.getCharFromPic(bitMap);
-            Rectangle rectStart = new Rectangle(64, 0, 7, 16);
-            Bitmap imgStart = bitMap.Clone(rectStart, bitMap.PixelFormat);
-            String start = OrcUtil.getSingleChar(imgStart, this.dict);
+            String tips = this.orcTips.getCharFromPic(bitmapTips);
+            String numbers = this.orcNo.getCharFromPic(bitmapTips);
+            char[] arrayno = numbers.ToCharArray();
+            String start = String.Format("{0}", arrayno[0]);
+            String end = String.Format("{0}", arrayno[1]);
 
-            if ("第".Equals(txt[3]))
-            {
-                Rectangle rectEnd = new Rectangle(88, 0, 7, 16);
-                Bitmap imgEnd = bitMap.Clone(rectEnd, bitMap.PixelFormat);
-                String end = OrcUtil.getSingleChar(imgEnd, this.dict);
-
+            if ('第'.Equals(tips[3]))
                 return captcha.Substring(Int16.Parse(start) - 1, Int16.Parse(end) - Int16.Parse(start) + 1);
-            }
-            else if ("前".Equals(txt[3]))
+            else if ('前'.Equals(tips[3]))
                 return captcha.Substring(0, Int16.Parse(start));
-            else if ("后".Equals(txt[3]))
+            else if ('后'.Equals(tips[3]))
                 return captcha.Substring(captcha.Length - Int16.Parse(start), Int16.Parse(start));
-            return "";
+            else
+                return captcha;
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public class OrcUtil
     {
         static public String getSingleChar(Bitmap img, IDictionary<Bitmap, String> dict)
@@ -92,6 +87,8 @@ namespace tobid
         private int offsetY;
         private int width, height;
         private IDictionary<Bitmap, String> dict;
+        private List<Bitmap> subImgs;
+        public List<Bitmap> SubImgs { get { return this.subImgs; } }
 
         static public OrcUtil getInstance(int[] offsetX, int offsetY, int width, int height, String dictPath)
         {
@@ -125,18 +122,11 @@ namespace tobid
 
                 Rectangle cloneRect = new Rectangle(this.offsetX[i], this.offsetY, this.width, this.height);
                 Bitmap subImg = it.Image.Clone(cloneRect, it.Image.PixelFormat);
-                //subImg.Save(String.Format("{0:D2}.jpg", i));
                 this.subImgs.Add(subImg);
                 String s = OrcUtil.getSingleChar(subImg, this.dict);
                 sb.Append(s);
             }
             return sb.ToString();
-        }
-
-        private List<Bitmap> subImgs;
-        public List<Bitmap> SubImgs
-        {
-            get { return this.subImgs; }
         }
     }
 
