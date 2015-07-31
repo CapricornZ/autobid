@@ -30,14 +30,25 @@ namespace tobid.rest
         public DateTime updateTime { get; set; }
     }
 
-    public class Operation
+    public abstract class Operation
     {
         public int id { get; set; }
         public String type { get; set; }
         public String content { get; set; }
-        private DateTime startTime { get; set; }
-        private DateTime expireTime { get; set; }
-        private DateTime updateTime { get; set; }
+        public DateTime startTime { get; set; }
+        public DateTime expireTime { get; set; }
+        public DateTime updateTime { get; set; }
+    }
+
+    public class BidOperation : Operation
+    {
+        public int price { get; set; }
+    }
+
+    public class LoginOperation : Operation
+    {
+        public String no { get; set; }
+        public String password { get; set; }
     }
 
     public class Position

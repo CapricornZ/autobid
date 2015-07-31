@@ -153,28 +153,20 @@ namespace tobid
             base.WndProc(ref m);
         }
 
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="ShowWindow")]
+        public static extern int ShowWindow(IntPtr hwnd, int nCmdShow);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="FindWindowA")]
+        public static extern IntPtr FindWindowA(String lp1, String lp2);
+
         private void button1_Click(object sender, EventArgs e)
         {
-            //this.webBrowser1.Navigate("www.alltobid.com/guopai/contents/56/2050.html");
-            //this.webBrowser1.Navigate("http://moni.51hupai.org:8081/");
-            //this.label2.Text = strTip;
+            System.Diagnostics.Process process = System.Diagnostics.Process.Start("iexplore.exe", "http://moni.51hupai.org:8081");
+            System.Threading.Thread.Sleep(500);
 
-            //string endpoint = "http://192.168.1.10:8080/chapta.ws/command/operation/BID/accept.do";
-            string endpoint = "http://10.16.145.189:8080/chapta.ws/command/operation/BID/accept.do";
-            tobid.rest.Bid bid = new tobid.rest.Bid();
-            bid.give = new tobid.rest.GivePrice();
-            bid.give.inputBox = new Position(0, 0);
-            bid.give.button = new Position(0, 0);
-            bid.give.price = new Position(1156, 352);
-
-            bid.submit = new tobid.rest.SubmitPrice();
-            bid.submit.captcha = new Position[3];
-            bid.submit.captcha[0] = new Position(1249, 468);
-            bid.submit.captcha[1] = new Position(1077, 513);
-            bid.submit.inputBox = new Position(0, 0);
-            bid.submit.buttons = new Position[] { new Position(0, 0), new Position(0, 0) };
-            RestClient rest = new RestClient(endpoint: endpoint, method: HttpVerb.POST, postObj: bid);
-            rest.MakeRequest();
+            IntPtr hTray = FindWindowA("IEFrame", null);
+            ShowWindow(hTray, 3);
+            //process.MainWindowHandle
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -457,9 +449,10 @@ namespace tobid
 
         private void receiveOperation(rest.Operation operation)
         {
+            rest.BidOperation bidOps = (rest.BidOperation)operation;
             rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
             this.positionDialog.bid = bid;
-            this.label3.Text = String.Format("收到配置：价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y);
+            this.label3.Text = String.Format("收到配置：+{5} @[{4}], 价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y, operation.startTime, bidOps.price);
         }
 
         private void radioButton1_CheckedChanged(object sender, EventArgs e)

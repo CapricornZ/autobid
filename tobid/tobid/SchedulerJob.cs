@@ -37,15 +37,23 @@ namespace tobid
             String epKeepAlive = this.EndPoint + "/command/keepAlive.do";
             RestClient restKeepAlive = new RestClient(endpoint: epKeepAlive, method: HttpVerb.POST);
             String rtn = restKeepAlive.MakeRequest(String.Format("?ip={0}", hostName));
-            tobid.rest.Client client = Newtonsoft.Json.JsonConvert.DeserializeObject<tobid.rest.Client>(rtn);
+            tobid.rest.Client client = Newtonsoft.Json.JsonConvert.DeserializeObject<tobid.rest.Client>(rtn, new OperationConvert());
             if (null != client.config && client.operation != null && client.operation.Length > 0)
             {
-                SubmitPriceJob.setConfig(client.config.startTime, client.config.expireTime, 300, client.operation[0]);
+                SubmitPriceJob.setConfig(client.config, client.operation[0]);
                 this.receiveOperation(client.operation[0]);
             }
         }
     }
 
+    public class OperationConvert : Newtonsoft.Json.Converters.CustomCreationConverter<rest.Operation>
+    {   
+        public override rest.Operation Create(Type objectType)
+        {   
+            return new rest.BidOperation();
+        }
+    }
+    
     /// <summary>
     /// SubmitPrice : 每秒检查，符合条件执行出价Action
     /// </summary>
@@ -68,16 +76,17 @@ namespace tobid
             this.m_captchaUtil = captchaUtil;
         }
 
-        public static void setConfig(DateTime startTime, DateTime expireTime, int deltaPrice, rest.Operation operation)
+        public static void setConfig(rest.Config config, rest.Operation operation)
         {
             lock (lockObj)
             {
-                if (startTime > SubmitPriceJob.startTime)
+                if (operation.startTime > SubmitPriceJob.startTime)
                 {
-                    SubmitPriceJob.startTime = startTime;
-                    SubmitPriceJob.expireTime = expireTime;
-                    SubmitPriceJob.deltaPrice = deltaPrice;
                     SubmitPriceJob.executeCount = 0;
+
+                    SubmitPriceJob.deltaPrice = ((rest.BidOperation)operation).price;
+                    SubmitPriceJob.startTime = operation.startTime;
+                    SubmitPriceJob.expireTime = operation.expireTime;
 
                     rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
                     SubmitPriceJob.operation = bid;
