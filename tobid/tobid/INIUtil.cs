@@ -5,7 +5,7 @@ using System.Text;
 
 using System.Runtime.InteropServices;
 
-namespace tobid
+namespace tobid.util
 {
     public class Ini
     {

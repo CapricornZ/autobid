@@ -7,7 +7,12 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 
-namespace tobid
+using tobid.rest.json;
+using tobid.util.http;
+using tobid.util.orc;
+using tobid.util;
+
+namespace tobid.scheduler.jobs
 {
     public delegate void ReceiveOperation(rest.Operation operation);
 
@@ -21,6 +26,8 @@ namespace tobid
     /// </summary>
     public class KeepAliveJob : ISchedulerJob
     {
+        private static log4net.ILog logger = log4net.LogManager.GetLogger("KeepAliveJob");
+
         private ReceiveOperation receiveOperation;
         public String EndPoint { get; set; }
 
@@ -32,25 +39,17 @@ namespace tobid
 
         public void Execute()
         {
-            System.Console.WriteLine(String.Format("{0} - {1} KeepAliveJob.Execute()", Thread.CurrentThread.Name, DateTime.Now));
+            logger.Debug(String.Format("{0} - {1} KeepAliveJob.Execute()", Thread.CurrentThread.Name, DateTime.Now));
             string hostName = System.Net.Dns.GetHostName();
             String epKeepAlive = this.EndPoint + "/command/keepAlive.do";
             RestClient restKeepAlive = new RestClient(endpoint: epKeepAlive, method: HttpVerb.POST);
             String rtn = restKeepAlive.MakeRequest(String.Format("?ip={0}", hostName));
             tobid.rest.Client client = Newtonsoft.Json.JsonConvert.DeserializeObject<tobid.rest.Client>(rtn, new OperationConvert());
-            if (null != client.config && client.operation != null && client.operation.Length > 0)
+            if (client.operation != null && client.operation.Length > 0)
             {
                 SubmitPriceJob.setConfig(client.config, client.operation[0]);
                 this.receiveOperation(client.operation[0]);
             }
-        }
-    }
-
-    public class OperationConvert : Newtonsoft.Json.Converters.CustomCreationConverter<rest.Operation>
-    {   
-        public override rest.Operation Create(Type objectType)
-        {   
-            return new rest.BidOperation();
         }
     }
     
@@ -59,6 +58,7 @@ namespace tobid
     /// </summary>
     public class SubmitPriceJob : ISchedulerJob
     {
+        private static log4net.ILog logger = log4net.LogManager.GetLogger(typeof(SubmitPriceJob));
         private static Object lockObj = new Object();
 
         private static rest.Bid operation;
@@ -78,6 +78,7 @@ namespace tobid
 
         public static void setConfig(rest.Config config, rest.Operation operation)
         {
+            logger.Debug("setConfig {...}");
             lock (lockObj)
             {
                 if (operation.startTime > SubmitPriceJob.startTime)
@@ -99,13 +100,13 @@ namespace tobid
         public void Execute(){
 
             DateTime now = DateTime.Now;
-            System.Console.WriteLine(String.Format("{0} - NOW:{1}, {{Expire:{2}, Count:{3}}}", Thread.CurrentThread.Name, now, SubmitPriceJob.expireTime, SubmitPriceJob.executeCount));
+            logger.Debug(String.Format("{0} - NOW:{1}, {{Expire:{2}, Count:{3}}}", Thread.CurrentThread.Name, now, SubmitPriceJob.expireTime, SubmitPriceJob.executeCount));
             if (Monitor.TryEnter(SubmitPriceJob.lockObj, 500))
             {
                 if (now >= SubmitPriceJob.startTime && now <= SubmitPriceJob.expireTime && SubmitPriceJob.executeCount==0)
                 {
                     SubmitPriceJob.executeCount++;
-                    System.Console.WriteLine("trigger Fired");
+                    logger.Debug("trigger Fired");
 
                     //出价
                     this.givePrice(SubmitPriceJob.operation.give, deltaPrice);
@@ -117,7 +118,7 @@ namespace tobid
             }
             else
             {
-                System.Console.WriteLine("obtain SubmitPriceJob.lockObj timeout");
+                logger.Error("obtain SubmitPriceJob.lockObj timeout");
             }
         }
 
@@ -180,9 +181,9 @@ namespace tobid
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
 
             byte[] binaryCaptcha = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[0].x, submitPoints.captcha[0].y, 108, 28);
-            System.Console.WriteLine("\t\tBEGIN postCaptcha - " + DateTime.Now.ToString());
+            logger.Debug("\t\tBEGIN postCaptcha - " + DateTime.Now.ToString());
             String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", binaryCaptcha);
-            System.Console.WriteLine("\t\tEND postCaptcha - " + DateTime.Now.ToString());
+            logger.Debug("\t\tEND postCaptcha - " + DateTime.Now.ToString());
 
             byte[] binaryTips = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[1].x, submitPoints.captcha[1].y, 112, 16);
             String strActive = this.m_captchaUtil.getActive(txtCaptcha, new Bitmap(new System.IO.MemoryStream(binaryTips)));
@@ -196,7 +197,7 @@ namespace tobid
             }
 
             ScreenUtil.SetCursorPos(submitPoints.buttons[0].x, submitPoints.buttons[0].y);
-            //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+            ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
             //System.Threading.Thread.Sleep(3000);
             //if (points.Length > 2)

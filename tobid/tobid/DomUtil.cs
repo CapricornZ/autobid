@@ -9,7 +9,7 @@ using System.IO;
 using System.Windows.Forms;
 using mshtml;
 
-namespace tobid
+namespace tobid.util
 {
     class DomUtil
     {

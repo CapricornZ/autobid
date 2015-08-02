@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 
-namespace tobid
+namespace tobid.util.orc
 {
     /// <summary>
     /// 根据提示获取有效验证码

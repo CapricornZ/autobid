@@ -11,6 +11,11 @@ using System.IO;
 using mshtml;
 
 using tobid.rest;
+using tobid.scheduler;
+using tobid.scheduler.jobs;
+using tobid.util;
+using tobid.util.orc;
+using tobid.util.http;
 
 namespace tobid
 {
@@ -159,8 +164,31 @@ namespace tobid
         [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="FindWindowA")]
         public static extern IntPtr FindWindowA(String lp1, String lp2);
 
+        [System.Runtime.InteropServices.DllImport("Kernel32.dll")]
+        private static extern bool AllocConsole(); //启动窗口
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", EntryPoint = "FreeConsole")]
+        private static extern bool FreeConsole();      //释放窗口，即关闭 
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "FindWindow")]
+        extern static IntPtr FindWindow(string lpClassName, string lpWindowName);//找出运行的窗口
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetSystemMenu")]
+        extern static IntPtr GetSystemMenu(IntPtr hWnd, IntPtr bRevert); //取出窗口运行的菜单
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "RemoveMenu")]
+        extern static IntPtr RemoveMenu(IntPtr hMenu, uint uPosition, uint uFlags); //灰掉按钮
+
+        [System.Runtime.InteropServices.DllImport("Kernel32.dll")]
+        public static extern bool SetConsoleTitle(string strMessage);
+
         private void button1_Click(object sender, EventArgs e)
         {
+            AllocConsole();
+            SetConsoleTitle("千万不要关掉我");
+            IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+            IntPtr closeMenu = GetSystemMenu(windowHandle, IntPtr.Zero);
+            uint SC_CLOSE = 0xF060;
+            RemoveMenu(closeMenu, SC_CLOSE, 0x0);
+
             System.Diagnostics.Process process = System.Diagnostics.Process.Start("iexplore.exe", "http://moni.51hupai.org:8081");
             System.Threading.Thread.Sleep(500);
 

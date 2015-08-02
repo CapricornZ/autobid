@@ -3,10 +3,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using System.Threading;
 
-namespace tobid
+using tobid.scheduler.jobs;
+
+namespace tobid.scheduler
 {
     public class SchedulerConfiguration
     {

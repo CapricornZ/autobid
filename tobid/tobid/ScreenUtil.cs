@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 using System.Runtime.InteropServices;
 
-namespace tobid
+namespace tobid.util
 {
     public enum MouseEventFlags
     {

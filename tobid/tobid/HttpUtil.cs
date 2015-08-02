@@ -6,7 +6,7 @@ using System.Text;
 using System.IO;
 using System.Net;
 
-namespace tobid
+namespace tobid.util.http
 {
     class HttpUtil
     {

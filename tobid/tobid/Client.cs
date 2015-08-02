@@ -30,6 +30,9 @@ namespace tobid.rest
         public DateTime updateTime { get; set; }
     }
 
+    /// <summary>
+    /// 操作类
+    /// </summary>
     public abstract class Operation
     {
         public int id { get; set; }
@@ -40,15 +43,30 @@ namespace tobid.rest
         public DateTime updateTime { get; set; }
     }
 
+    /// <summary>
+    /// 第二阶段出价
+    /// </summary>
     public class BidOperation : Operation
     {
+        /// <summary>
+        /// 原价基础上Delta价格
+        /// </summary>
         public int price { get; set; }
     }
 
+    /// <summary>
+    /// 登录
+    /// </summary>
     public class LoginOperation : Operation
     {
-        public String no { get; set; }
-        public String password { get; set; }
+    }
+
+    /// <summary>
+    /// 第一阶段出价
+    /// </summary>
+    public class Step1Operation : Operation
+    {
+        public int price { get; set; }
     }
 
     public class Position
@@ -61,6 +79,10 @@ namespace tobid.rest
         public int x { get; set; }
         public int y { get; set; }
     }
+
+    /// <summary>
+    /// 出价的坐标
+    /// </summary>
     public class GivePrice
     {
         public Position price { get; set; }
@@ -68,6 +90,9 @@ namespace tobid.rest
         public Position button { get; set; }
     }
 
+    /// <summary>
+    /// 出价验证码坐标
+    /// </summary>
     public class SubmitPrice
     {
         public Position[] captcha { get; set; }

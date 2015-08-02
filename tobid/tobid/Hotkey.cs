@@ -6,7 +6,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace tobid
+namespace tobid.util
 {
     class Hotkey
     {

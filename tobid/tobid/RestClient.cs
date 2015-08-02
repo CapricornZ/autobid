@@ -6,16 +6,16 @@ using System.Text;
 using System.Net;
 using System.IO;
 
-public enum HttpVerb
+namespace tobid.util.http
 {
-    GET,
-    POST,
-    PUT,
-    DELETE
-}
+    public enum HttpVerb
+    {
+        GET,
+        POST,
+        PUT,
+        DELETE
+    }
 
-namespace tobid
-{
     public class RestClient
     {
         public string EndPoint { get; set; }
