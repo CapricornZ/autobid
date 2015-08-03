@@ -7,6 +7,9 @@ using Newtonsoft.Json.Linq;
 
 namespace tobid.rest.json
 {
+    /// <summary>
+    /// 根据TYPE字段内容创建相应Operation对象
+    /// </summary>
     public class OperationConvert : JsonCreationConverter<Operation>
     {
         protected override Operation Create(Type objectType, JObject jObject)

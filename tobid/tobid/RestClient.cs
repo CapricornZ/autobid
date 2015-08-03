@@ -30,6 +30,7 @@ namespace tobid.util.http
             this.ContentType = "text/xml";
             this.PostData = "";
         }
+
         public RestClient(string endpoint, HttpVerb method, string postData)
         {
             this.EndPoint = endpoint;
@@ -37,6 +38,7 @@ namespace tobid.util.http
             this.ContentType = "text/xml";
             this.PostData = postData;
         }
+
         public RestClient(string endpoint, HttpVerb method, Object postObj)
         {
             this.EndPoint = endpoint;

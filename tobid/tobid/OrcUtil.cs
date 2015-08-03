@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -38,7 +40,7 @@ namespace tobid.util.orc
     }
 
     /// <summary>
-    /// 
+    /// 识别图片
     /// </summary>
     public class OrcUtil
     {
@@ -90,6 +92,43 @@ namespace tobid.util.orc
         private List<Bitmap> subImgs;
         public List<Bitmap> SubImgs { get { return this.subImgs; } }
 
+        /// <summary>
+        /// 创建Orc实例(from Stream)
+        /// </summary>
+        /// <param name="offsetX"></param>
+        /// <param name="offsetY"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="resource"></param>
+        /// <returns></returns>
+        static public OrcUtil getInstance(int[] offsetX, int offsetY, int width, int height, Stream resource)
+        {
+            OrcUtil rtn = new OrcUtil();
+            rtn.offsetX = offsetX;
+            rtn.offsetY = offsetY;
+            rtn.width = width;
+            rtn.height = height;
+            rtn.dict = new Dictionary<Bitmap, String>();
+
+            System.Resources.ResXResourceReader resxReader = new System.Resources.ResXResourceReader(resource);
+            IDictionaryEnumerator enumerator = resxReader.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                DictionaryEntry entry = (DictionaryEntry)enumerator.Current;
+                rtn.dict.Add((Bitmap)entry.Value, (String)entry.Key);
+            }
+            return rtn;
+        }
+
+        /// <summary>
+        /// 创建Orc实例(from Directory)
+        /// </summary>
+        /// <param name="offsetX"></param>
+        /// <param name="offsetY"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="resource"></param>
+        /// <returns></returns>
         static public OrcUtil getInstance(int[] offsetX, int offsetY, int width, int height, String dictPath)
         {
             OrcUtil rtn = new OrcUtil();
@@ -130,7 +169,7 @@ namespace tobid.util.orc
         }
     }
 
-    public class ImageTool
+    class ImageTool
     {
         private Bitmap image;
         private int width;

@@ -32,6 +32,7 @@ namespace tobid
             this.webBrowser1.Height = this.Size.Height - 98;
         }
 
+        private static log4net.ILog logger = log4net.LogManager.GetLogger(typeof(Form1));
         private OrcUtil m_orcPrice;
         private OrcUtil m_orcCaptchaLoading;
         private OrcUtil m_orcCaptchaTip;
@@ -76,25 +77,24 @@ namespace tobid
 
             this.textURL.Text = url;
 
-            this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
-            this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
-            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
-            this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, tipDict + "/no");
+            this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, new FileStream("price.resx", FileMode.Open));
+            this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, new FileStream("loading.resx", FileMode.Open));
+            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, new FileStream("captcha.tips.resx", FileMode.Open));
+            this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, new FileStream("captcha.tips.no.resx", FileMode.Open));
+
+            //this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
+            //this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
+            //this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
+            //this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, tipDict + "/no");
             this.m_orcCaptchaUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
 
             SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 2);
             config5M.Job = new KeepAliveJob(url, new ReceiveOperation(this.receiveOperation));
             m_schedulerKeepAlive = new Scheduler(config5M);
-            //System.Threading.ThreadStart myThreadStart = new System.Threading.ThreadStart(m_schedulerKeepAlive.Start);
-            //this.keeyAliveThread = new System.Threading.Thread(myThreadStart);
-            //this.keeyAliveThread.Start();
 
             SchedulerConfiguration config1S = new SchedulerConfiguration(1000);
             config1S.Job = new SubmitPriceJob(url, this.m_orcPrice, this.m_orcCaptchaUtil);
             m_schedulerSubmit = new Scheduler(config1S);
-            //System.Threading.ThreadStart submitPriceThreadStart = new System.Threading.ThreadStart(m_schedulerSubmit.Start);
-            //this.submitPriceThread = new System.Threading.Thread(submitPriceThreadStart);
-            //this.submitPriceThread.Start();
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -194,7 +194,6 @@ namespace tobid
 
             IntPtr hTray = FindWindowA("IEFrame", null);
             ShowWindow(hTray, 3);
-            //process.MainWindowHandle
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -296,56 +295,22 @@ namespace tobid
             this.label2.Text = this.m_orcCaptchaUtil.getActive("123456", new Bitmap(new MemoryStream(content)));
             System.Console.WriteLine(String.Format("{0} -- end TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
         }
-
-        private class Util
-        {
-            public static Point[] getPoint(TextBox txtBox)
-            {
-                String[] array = txtBox.Text.Split(new char[] { ';' });
-                Point[] rtn = new Point[array.Length];
-                int i = 0;
-                foreach (String item in array){
-                    String[] pos = item.Split(new char[]{','});
-                    rtn[i++] = new Point(Int32.Parse(pos[0]), Int32.Parse(pos[1]));
-                }
-                return rtn;
-            }
-        }
-
+        
+        /// <summary>
+        /// 出价
+        /// </summary>
+        /// <param name="deltaPrice"></param>
         private void wholeProcess(int deltaPrice)
-        {
-            System.Console.WriteLine("BEGIN - " + DateTime.Now.ToString());
-            //Point[] points = Util.getPoint(this.textPoss);
-            //Point[] points = null;
-            //Point[] pointPrice = new Point[3];
-            //Point[] pointSubmit = new Point[points.Length - 3];
-            //for(int i=0; i<3; i++)
-            //    pointPrice[i] = points[i];
-            //for (int i = 3; i < points.Length; i++)
-            //    pointSubmit[i - 3] = points[i];
-            
-            System.Console.WriteLine("\tBEGIN givePrice - " + DateTime.Now.ToString());
+        {   
             this.givePrice(this.textURL.Text, this.positionDialog.bid.give, deltaPrice);
-            System.Console.WriteLine("\tEND givePrice - " + DateTime.Now.ToString());
-            //System.Threading.Thread.Sleep(500);
-            //System.Console.WriteLine("\tBEGIN submit - " + DateTime.Now.ToString());
-            //this.subimt(this.textURL.Text, pointSubmit);
-            //System.Console.WriteLine("\tEND submit - " + DateTime.Now.ToString());
         }
 
+        /// <summary>
+        /// 提交
+        /// </summary>
+        /// <param name="type"></param>
         private void process(int type)
         {
-            System.Console.WriteLine("BEGIN - " + DateTime.Now.ToString());
-            //Point[] points = Util.getPoint(this.textPoss);
-            //Point[] points = null;
-            //Point[] pointPrice = new Point[3];
-            //Point[] pointSubmit = new Point[points.Length - 3];
-            //for (int i = 0; i < 3; i++)
-            //    pointPrice[i] = points[i];
-            //for (int i = 3; i < points.Length; i++)
-            //    pointSubmit[i - 3] = points[i];
-
-            //System.Threading.Thread.Sleep(500);
             System.Console.WriteLine("\tBEGIN submit - " + DateTime.Now.ToString());
             this.subimt(this.textURL.Text, this.positionDialog.bid.submit, type);
             System.Console.WriteLine("\tEND submit - " + DateTime.Now.ToString());
@@ -353,16 +318,17 @@ namespace tobid
 
         private void givePrice(String URL, rest.GivePrice points, int deltaPrice)
         {
+            logger.Info("BEGIN 出价格");
             byte[] content = new ScreenUtil().screenCaptureAsByte(points.price.x, points.price.y, 52, 18);
             this.pictureBox2.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
-            System.Console.WriteLine("\t\tBEGIN postPrice - " + DateTime.Now.ToString());
-            //String txtPrice = new HttpUtil().postByteAsFile(URL + "/chapta.ws/receive/price.do", content);//远程
+            logger.Info("\tBEGIN postPrice");
             String txtPrice = this.m_orcPrice.getCharFromPic(new Bitmap(this.pictureBox2.Image));
-            System.Console.WriteLine("\t\tEND postPrice - " + DateTime.Now.ToString());
+            logger.Info("\tEND   postPrice");
             int price = Int32.Parse(txtPrice);
             price += deltaPrice;
             txtPrice = String.Format("{0:D5}", price);
 
+            logger.Info("\tBEGIN input PRICE");
             ScreenUtil.SetCursorPos(points.inputBox.x, points.inputBox.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
@@ -383,18 +349,22 @@ namespace tobid
                 System.Threading.Thread.Sleep(50);
                 ScreenUtil.keybd_event(ScreenUtil.keycode[txtPrice[i].ToString()], 0, 0, 0);
             }
+            logger.Info("\tEND   input PRICE");
 
             //点击出价
             System.Threading.Thread.Sleep(50);
             ScreenUtil.SetCursorPos(points.button.x, points.button.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+            logger.Info("END   出价格");
         }
 
         private void subimt(String URL, rest.SubmitPrice points, int type)
         {
+            logger.Info("BEGIN 验证码");
             ScreenUtil.SetCursorPos(points.inputBox.x, points.inputBox.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
+            logger.Info("\tBEGIN make INPUTBOX blank");
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
@@ -406,14 +376,16 @@ namespace tobid
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
+            logger.Info("\tEND   make INPUTBOX blank");
 
             byte[] content = new ScreenUtil().screenCaptureAsByte(points.captcha[0].x, points.captcha[0].y, 108, 28);
             this.pictureBox1.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
 
-            System.Console.WriteLine("\t\tBEGIN postCaptcha - " + DateTime.Now.ToString());
+            logger.Info("\tBEGIN postCaptcha");
             String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", content);
-            System.Console.WriteLine("\t\tEND postCaptcha - " + DateTime.Now.ToString());
+            logger.Info("\tEND   postCaptcha");
 
+            logger.Info("\tBEGIN input ACTIVE CAPTCHA [" + type + "]");
             if (type == 0)
             {
                 for (int i = 0; i < 4; i++)
@@ -438,15 +410,12 @@ namespace tobid
                     System.Threading.Thread.Sleep(50);
                 }
             }
-            
-            System.Console.WriteLine("\t\tEND inputCaptcha - " + DateTime.Now.ToString());
+            logger.Info("\tEND   input ACTIVE CAPTCHA");
 
-            //System.Threading.Thread.Sleep(3000);
-            //if (points.Length > 2)
             {
                 System.Threading.Thread.Sleep(50);
                 ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);
-                //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+                ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
                 //if (points.Length > 3)
                 //{
@@ -455,6 +424,7 @@ namespace tobid
                     //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
                 //}
             }
+            logger.Info("END   验证码");
         }
 
         private void button_openDialog(object sender, EventArgs e)
@@ -466,8 +436,7 @@ namespace tobid
         private void button_sync2Server(object sender, EventArgs e)
         {
             if (positionDialog.bid != null)
-            {   
-                //string endpoint = this.textURL.Text + "/command/operation/BID/accept.do";
+            {
                 string hostName = System.Net.Dns.GetHostName();
                 string endpoint = this.textURL.Text + "/command/operation/screenconfig/BID/accept.do";
                 RestClient rest = new RestClient(endpoint: endpoint, method: HttpVerb.POST, postObj: this.positionDialog.bid);
@@ -483,6 +452,11 @@ namespace tobid
             this.label3.Text = String.Format("收到配置：+{5} @[{4}], 价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y, operation.startTime, bidOps.price);
         }
 
+        /// <summary>
+        /// 手动
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
             if (this.radioButton1.Checked)
@@ -492,6 +466,11 @@ namespace tobid
             }
         }
 
+        /// <summary>
+        /// 自动
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void radioButton2_CheckedChanged(object sender, EventArgs e)
         {
             if (this.radioButton2.Checked)

@@ -78,7 +78,7 @@ namespace tobid.scheduler.jobs
 
         public static void setConfig(rest.Config config, rest.Operation operation)
         {
-            logger.Debug("setConfig {...}");
+            logger.Info("setConfig {...}");
             lock (lockObj)
             {
                 if (operation.startTime > SubmitPriceJob.startTime)
@@ -88,6 +88,10 @@ namespace tobid.scheduler.jobs
                     SubmitPriceJob.deltaPrice = ((rest.BidOperation)operation).price;
                     SubmitPriceJob.startTime = operation.startTime;
                     SubmitPriceJob.expireTime = operation.expireTime;
+
+                    logger.DebugFormat("PRICE:{0}", ((rest.BidOperation)operation).price);
+                    logger.DebugFormat("startTime:{0}", operation.startTime);
+                    logger.DebugFormat("expireTime:{0}", operation.expireTime);
 
                     rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
                     SubmitPriceJob.operation = bid;
@@ -108,10 +112,8 @@ namespace tobid.scheduler.jobs
                     SubmitPriceJob.executeCount++;
                     logger.Debug("trigger Fired");
 
-                    //出价
-                    this.givePrice(SubmitPriceJob.operation.give, deltaPrice);
-                    //提交
-                    this.submit(this.EndPoint, SubmitPriceJob.operation.submit);
+                    this.givePrice(SubmitPriceJob.operation.give, deltaPrice);//出价
+                    this.submit(this.EndPoint, SubmitPriceJob.operation.submit);//提交
                 }
                 
                 Monitor.Exit(SubmitPriceJob.lockObj);
@@ -129,13 +131,17 @@ namespace tobid.scheduler.jobs
         /// <param name="delta">差价</param>
         private void givePrice(rest.GivePrice givePrice, int delta)
         {
+            logger.Info("BEGIN givePRICE");
+            logger.Info("\tBEGIN identify PRICE...");
             byte[] content = new ScreenUtil().screenCaptureAsByte(givePrice.price.x, givePrice.price.y, 52, 18);
             String txtPrice = this.m_orcPrice.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
             int price = Int32.Parse(txtPrice);
             price += delta;
             txtPrice = String.Format("{0:D}", price);
+            logger.InfoFormat("\tEND   identified PRICE = %s", txtPrice);
 
             //INPUT BOX
+            logger.Info("\tBEGIN input PRICE");
             ScreenUtil.SetCursorPos(givePrice.inputBox.x, givePrice.inputBox.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
@@ -156,15 +162,21 @@ namespace tobid.scheduler.jobs
                 System.Threading.Thread.Sleep(50);
                 ScreenUtil.keybd_event(ScreenUtil.keycode[txtPrice[i].ToString()], 0, 0, 0);
             }
+            logger.Info("\tEND   input PRICE");
 
             //点击出价
+            logger.Info("\tBEGIN click BUTTON[出价]");
             System.Threading.Thread.Sleep(50);
             ScreenUtil.SetCursorPos(givePrice.button.x, givePrice.button.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+            logger.Info("\tEND   click BUTTON[出价]");
+            logger.Info("END   givePRICE");
         }
 
         private void submit(String URL, rest.SubmitPrice submitPoints)
         {
+            logger.Info("BEGIN giveCAPTCHA");
+            logger.Info("\tBEGIN make INPUT blank");
             ScreenUtil.SetCursorPos(submitPoints.inputBox.x, submitPoints.inputBox.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
@@ -179,15 +191,18 @@ namespace tobid.scheduler.jobs
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
+            logger.Info("\tEND   make INPUT blank");
 
+            logger.Info("\tBEGIN identify CAPTCHA...");
             byte[] binaryCaptcha = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[0].x, submitPoints.captcha[0].y, 108, 28);
-            logger.Debug("\t\tBEGIN postCaptcha - " + DateTime.Now.ToString());
+            logger.Info("\t\tBEGIN post CAPTACH");
             String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", binaryCaptcha);
-            logger.Debug("\t\tEND postCaptcha - " + DateTime.Now.ToString());
-
+            logger.Info("\t\tEND   post CAPTACH");
             byte[] binaryTips = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[1].x, submitPoints.captcha[1].y, 112, 16);
             String strActive = this.m_captchaUtil.getActive(txtCaptcha, new Bitmap(new System.IO.MemoryStream(binaryTips)));
-            
+            logger.InfoFormat("\tEND   identified CAPTCHA = {0}, ACTIVE = {1}", txtCaptcha, strActive);
+
+            logger.Info("\tBEGIN input CAPTCHA");
             {
                 for (int i = 0; i < strActive.Length; i++)
                 {
@@ -195,9 +210,12 @@ namespace tobid.scheduler.jobs
                     System.Threading.Thread.Sleep(50);
                 }
             }
+            logger.Info("\tEND   input CAPTCHA");
 
+            logger.Info("\tBEGIN click BUTTON[确定]");
             ScreenUtil.SetCursorPos(submitPoints.buttons[0].x, submitPoints.buttons[0].y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+            logger.Info("\tEND   click BUTTON[确定]");
 
             //System.Threading.Thread.Sleep(3000);
             //if (points.Length > 2)
@@ -213,6 +231,7 @@ namespace tobid.scheduler.jobs
                     //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
             //    }
             //}
+            logger.Info("END   giveCAPTCHA");
         }
     }
 }
