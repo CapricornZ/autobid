@@ -182,18 +182,29 @@ namespace tobid
 
         private void button1_Click(object sender, EventArgs e)
         {
-            AllocConsole();
-            SetConsoleTitle("千万不要关掉我");
-            IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-            IntPtr closeMenu = GetSystemMenu(windowHandle, IntPtr.Zero);
-            uint SC_CLOSE = 0xF060;
-            RemoveMenu(closeMenu, SC_CLOSE, 0x0);
+            //AllocConsole();
+            //SetConsoleTitle("千万不要关掉我");
+            //IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+            //IntPtr closeMenu = GetSystemMenu(windowHandle, IntPtr.Zero);
+            //uint SC_CLOSE = 0xF060;
+            //RemoveMenu(closeMenu, SC_CLOSE, 0x0);
 
-            System.Diagnostics.Process process = System.Diagnostics.Process.Start("iexplore.exe", "http://moni.51hupai.org:8081");
-            System.Threading.Thread.Sleep(500);
+            //System.Diagnostics.Process process = System.Diagnostics.Process.Start("iexplore.exe", "http://moni.51hupai.org:8081");
+            //System.Threading.Thread.Sleep(500);
 
-            IntPtr hTray = FindWindowA("IEFrame", null);
-            ShowWindow(hTray, 3);
+            //IntPtr hTray = FindWindowA("IEFrame", null);
+            //ShowWindow(hTray, 3);
+            Image part = Bitmap.FromFile(@"e:\part.bmp");
+            Image source = Bitmap.FromFile(@"e:\source.bmp");
+            Image source0 = Bitmap.FromFile(@"e:\source0.bmp");
+            Image source1 = Bitmap.FromFile(@"G:\DICT\sample\real\截图25.bmp");
+            Image source2 = Bitmap.FromFile(@"e:\source0.bmp");
+            //Point pos = ScreenUtil.GetImageContains(new Bitmap(source), new Bitmap(part), 0);
+            //Point pos0 = ScreenUtil.GetImageContains(new Bitmap(source0), new Bitmap(part), 0);
+            Point pos = new ImageHelper().GetImageContains(new Bitmap(source), new Bitmap(part), 0);
+            Point pos0 = new ImageHelper().GetImageContains(new Bitmap(source0), new Bitmap(part), 0);
+            Point pos1 = new ImageHelper().GetImageContains(new Bitmap(source1), new Bitmap(part), 0);
+            Point pos2 = new ImageHelper().GetImageContains(new Bitmap(source2), new Bitmap(part), 0);
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -239,19 +250,30 @@ namespace tobid
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
-            //String strTip = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
-            String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha/detail.do", content);
-            String[] array = Newtonsoft.Json.JsonConvert.DeserializeObject<String[]>(txtCaptcha);
 
-            this.pictureBox4.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[0])));
-            this.pictureBox5.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[1])));
-            this.pictureBox6.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[2])));
-            this.pictureBox7.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[3])));
-            this.pictureBox8.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[4])));
-            this.pictureBox9.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[5])));
+            if (this.checkBox1.Checked)//校验码
+            {
+                String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha/detail.do", content);
+                String[] array = Newtonsoft.Json.JsonConvert.DeserializeObject<String[]>(txtCaptcha);
 
-            this.label1.Text = array[6];
-            //this.label2.Text = strTip;
+                this.pictureBox4.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[0])));
+                this.pictureBox5.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[1])));
+                this.pictureBox6.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[2])));
+                this.pictureBox7.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[3])));
+                this.pictureBox8.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[4])));
+                this.pictureBox9.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[5])));
+                this.label1.Text = array[6];
+            }
+            else
+            {
+                String strLoading = this.m_orcCaptchaLoading.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
+
+                this.pictureBox4.Image = this.m_orcCaptchaLoading.SubImgs[0];
+                this.pictureBox5.Image = this.m_orcCaptchaLoading.SubImgs[1];
+                this.pictureBox6.Image = this.m_orcCaptchaLoading.SubImgs[2];
+                this.pictureBox7.Image = this.m_orcCaptchaLoading.SubImgs[3];
+                this.label2.Text = strLoading;
+            }
         }
 
         /// <summary>
@@ -486,5 +508,7 @@ namespace tobid
                 this.submitPriceThread.Start();
             }
         }
+
+        
     }
 }
