@@ -52,6 +52,22 @@ namespace tobid
             this.textBox1.Text = x + "," + y;
         }
 
+        private void receiveOperation(rest.Operation operation)
+        {
+            rest.BidOperation bidOps = (rest.BidOperation)operation;
+            rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
+            this.positionDialog.bid = bid;
+            this.label3.Text = String.Format("配置：+{5} @[{4}], 价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y, operation.startTime, bidOps.price);
+        }
+
+        private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            //1165,652
+            Point screenPoint = Control.MousePosition;
+            updateMouse update = new updateMouse(this.update);
+            this.Invoke(update, new object[] { screenPoint.X, screenPoint.Y });
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
             Form.CheckForIllegalCrossThreadCalls = false;
@@ -70,28 +86,38 @@ namespace tobid
 
             Ini ini = new Ini(Directory.GetCurrentDirectory() + "/config.ini");
             String url = ini.ReadValue("GLOBAL", "URL");
-            String poss = ini.ReadValue("GLOBAL", "POSITIONS");
-            String priceDict = ini.ReadValue("GLOBAL", "PRICE_DICT");
-            String loadingDict = ini.ReadValue("GLOBAL", "LOAD_DICT");
-            String tipDict = ini.ReadValue("GLOBAL", "TIP_DICT");
 
             this.textURL.Text = url;
+
+            //加载配置项1
+            IGlobalConfig configResource = Resource.getInstance(url);//加载配置
+            this.m_orcPrice = configResource.Price;//价格识别
+            this.m_orcCaptchaLoading = configResource.Loading;//LOADING识别
+            this.m_orcCaptchaTip = configResource.Tips;//验证码提示（文字）
+            this.m_orcCaptchaTipNo = configResource.TipsNo;//验证码提示（数字）
+            this.m_orcCaptchaUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
+
+            //加载配置项2
+            KeepAliveJob keepAliveJob = new KeepAliveJob(url, new ReceiveOperation(this.receiveOperation));
+            keepAliveJob.Execute();
 
             //this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, new FileStream("price.resx", FileMode.Open));
             //this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, new FileStream("loading.resx", FileMode.Open));
             //this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, new FileStream("captcha.tips.resx", FileMode.Open));
             //this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, new FileStream("captcha.tips.no.resx", FileMode.Open));
 
-            this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
-            this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
-            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
-            this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 104 }, 0, 7, 16, tipDict + "/no");
-            this.m_orcCaptchaUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
+            //this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
+            //this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
+            //this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
+            //this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 104 }, 0, 7, 16, tipDict + "/no");
+            //this.m_orcCaptchaUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
 
-            SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 2);
+            //keepAlive任务配置
+            SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 1);
             config5M.Job = new KeepAliveJob(url, new ReceiveOperation(this.receiveOperation));
             m_schedulerKeepAlive = new Scheduler(config5M);
 
+            //Action任务配置
             SchedulerConfiguration config1S = new SchedulerConfiguration(1000);
             config1S.Job = new SubmitPriceJob(url, this.m_orcPrice, this.m_orcCaptchaUtil);
             m_schedulerSubmit = new Scheduler(config1S);
@@ -142,15 +168,15 @@ namespace tobid
                             break;
                         case 110://CTRL+UP
                             System.Console.WriteLine("HOT KEY 110");
-                            this.process(1);
+                            this.process(1);//出验证码中间4位
                             break;
                         case 111://CTRL+LEFT
                             System.Console.WriteLine("HOT KEY 111");
-                            this.process(0);
+                            this.process(0);//出验证码前4位
                             break;
                         case 112://CTRL+RIGHT
                             System.Console.WriteLine("HOT KEY 112");
-                            this.process(2);
+                            this.process(2);//出验证码后4位
                             break;
                     }
                     break;
@@ -167,7 +193,7 @@ namespace tobid
         [System.Runtime.InteropServices.DllImport("Kernel32.dll")]
         private static extern bool AllocConsole(); //启动窗口
         [System.Runtime.InteropServices.DllImport("kernel32.dll", EntryPoint = "FreeConsole")]
-        private static extern bool FreeConsole();      //释放窗口，即关闭 
+        private static extern bool FreeConsole();      //释放窗口，即关闭
         [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "FindWindow")]
         extern static IntPtr FindWindow(string lpClassName, string lpWindowName);//找出运行的窗口
 
@@ -181,7 +207,7 @@ namespace tobid
         public static extern bool SetConsoleTitle(string strMessage);
 
         private void button1_Click(object sender, EventArgs e)
-        {
+        {   
             //AllocConsole();
             //SetConsoleTitle("千万不要关掉我");
             //IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
@@ -194,17 +220,6 @@ namespace tobid
 
             //IntPtr hTray = FindWindowA("IEFrame", null);
             //ShowWindow(hTray, 3);
-            Image part = Bitmap.FromFile(@"e:\part.bmp");
-            Image source = Bitmap.FromFile(@"e:\source.bmp");
-            Image source0 = Bitmap.FromFile(@"e:\source0.bmp");
-            Image source1 = Bitmap.FromFile(@"G:\DICT\sample\real\截图25.bmp");
-            Image source2 = Bitmap.FromFile(@"e:\source0.bmp");
-            //Point pos = ScreenUtil.GetImageContains(new Bitmap(source), new Bitmap(part), 0);
-            //Point pos0 = ScreenUtil.GetImageContains(new Bitmap(source0), new Bitmap(part), 0);
-            Point pos = new ImageHelper().GetImageContains(new Bitmap(source), new Bitmap(part), 0);
-            Point pos0 = new ImageHelper().GetImageContains(new Bitmap(source0), new Bitmap(part), 0);
-            Point pos1 = new ImageHelper().GetImageContains(new Bitmap(source1), new Bitmap(part), 0);
-            Point pos2 = new ImageHelper().GetImageContains(new Bitmap(source2), new Bitmap(part), 0);
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -232,26 +247,18 @@ namespace tobid
             query.InvokeMember("click");
         }
 
-        private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            //1165,652
-            Point screenPoint = Control.MousePosition;
-            updateMouse update = new updateMouse(this.update);
-            this.Invoke(update, new object[] { screenPoint.X, screenPoint.Y });
-        }
-
         /// <summary>
         /// 测试验证码
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button3_Click(object sender, EventArgs e)
+        private void button3_captcha_Click(object sender, EventArgs e)
         {
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
-            byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 24);
+            byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 28);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
 
-            if (this.checkBox1.Checked)//校验码
+            if (this.checkBox1.Checked)//如果选中“校验码”
             {
                 String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha/detail.do", content);
                 String[] array = Newtonsoft.Json.JsonConvert.DeserializeObject<String[]>(txtCaptcha);
@@ -264,7 +271,7 @@ namespace tobid
                 this.pictureBox9.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[5])));
                 this.label1.Text = array[6];
             }
-            else
+            else//测试“正在加载校验码”
             {
                 String strLoading = this.m_orcCaptchaLoading.getCharFromPic(new Bitmap(new System.IO.MemoryStream(content)));
 
@@ -281,17 +288,19 @@ namespace tobid
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button4_Click(object sender, EventArgs e)
+        private void button4_price_Click(object sender, EventArgs e)
         {
             System.Console.WriteLine(String.Format("{0} -- start TEST PRICE --", DateTime.Now.ToString("HH:mm:ss.ffff")));
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 100, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
             String txtPrice = this.m_orcPrice.getCharFromPic(new Bitmap(this.pictureBox3.Image));
-            this.pictureBox4.Image = this.m_orcPrice.SubImgs[0];
-            this.pictureBox5.Image = this.m_orcPrice.SubImgs[1];
-            this.pictureBox6.Image = this.m_orcPrice.SubImgs[2];
-            this.pictureBox7.Image = this.m_orcPrice.SubImgs[3];
+            PictureBox[] controlls = new PictureBox[]{
+                this.pictureBox4, this.pictureBox5, this.pictureBox6, 
+                this.pictureBox7, this.pictureBox8, this.pictureBox9
+            };
+            for (int i = 0; i < this.m_orcPrice.SubImgs.Count; i++)
+                controlls[i].Image = this.m_orcPrice.SubImgs[i];
             this.label1.Text = txtPrice;
             System.Console.WriteLine(String.Format("{0} -- end TEST PRICE --", DateTime.Now.ToString("HH:mm:ss.ffff")));
         }
@@ -301,7 +310,7 @@ namespace tobid
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button5_Click(object sender, EventArgs e)
+        private void button5_tips_Click(object sender, EventArgs e)
         {
             //m_orcCaptchaUtil
             System.Console.WriteLine(String.Format("{0} -- start TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
@@ -330,14 +339,12 @@ namespace tobid
         }
 
         /// <summary>
-        /// 提交
+        /// 出校验码
         /// </summary>
         /// <param name="type"></param>
         private void process(int type)
         {
-            System.Console.WriteLine("\tBEGIN submit - " + DateTime.Now.ToString());
             this.subimt(this.textURL.Text, this.positionDialog.bid.submit, type);
-            System.Console.WriteLine("\tEND submit - " + DateTime.Now.ToString());
         }
 
         private void givePrice(String URL, rest.GivePrice points, int deltaPrice)
@@ -451,12 +458,22 @@ namespace tobid
             logger.Info("END   验证码");
         }
 
+        /// <summary>
+        /// 打开配置对话框
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button_openDialog(object sender, EventArgs e)
         {
             this.positionDialog.ShowDialog(this);
             this.positionDialog.BringToFront();
         }
 
+        /// <summary>
+        /// 提交配置坐标到服务器
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button_sync2Server(object sender, EventArgs e)
         {
             if (positionDialog.bid != null)
@@ -466,14 +483,6 @@ namespace tobid
                 RestClient rest = new RestClient(endpoint: endpoint, method: HttpVerb.POST, postObj: this.positionDialog.bid);
                 String response = rest.MakeRequest("?fromHost=" + hostName);
             }
-        }
-
-        private void receiveOperation(rest.Operation operation)
-        {
-            rest.BidOperation bidOps = (rest.BidOperation)operation;
-            rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
-            this.positionDialog.bid = bid;
-            this.label3.Text = String.Format("收到配置：+{5} @[{4}], 价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y, operation.startTime, bidOps.price);
         }
 
         /// <summary>
@@ -510,7 +519,5 @@ namespace tobid
                 this.submitPriceThread.Start();
             }
         }
-
-        
     }
 }

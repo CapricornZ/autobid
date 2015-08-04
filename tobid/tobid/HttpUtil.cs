@@ -10,6 +10,28 @@ namespace tobid.util.http
 {
     class HttpUtil
     {
+        /// <summary>
+        /// 从Address地址获取数据
+        /// </summary>
+        /// <param name="address">url地址</param>
+        /// <returns></returns>
+        public Stream getAsBinary(String address)
+        {
+            HttpWebRequest httpReq = (HttpWebRequest)WebRequest.Create(new Uri(address));
+            httpReq.Method = "GET";
+            httpReq.Timeout = 1000 * 60;
+
+            WebResponse webRespon = httpReq.GetResponse();
+            Stream s = webRespon.GetResponseStream();
+            return s;
+        }
+
+        /// <summary>
+        /// 上传附件到address地址
+        /// </summary>
+        /// <param name="address">url地址</param>
+        /// <param name="content">文件内容</param>
+        /// <returns></returns>
         public String postByteAsFile(String address, byte[] content)
         {
             String returnValue = "++++++";
@@ -51,7 +73,6 @@ namespace tobid.util.http
             httpReq.ContentLength = length;
             try
             {
-
                 Stream postStream = httpReq.GetRequestStream();
 
                 //发送请求头部消息

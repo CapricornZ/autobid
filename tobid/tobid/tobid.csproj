@@ -38,6 +38,9 @@
     <Reference Include="Accessibility">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\..\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
     <Reference Include="log4net">
       <HintPath>..\..\log4net.dll</HintPath>
     </Reference>
@@ -84,10 +87,10 @@
     <Compile Include="Scheduler.cs" />
     <Compile Include="SchedulerJob.cs" />
     <Compile Include="ScreenUtil.cs" />
+    <Compile Include="ResourceUtil.cs" />
     <EmbeddedResource Include="BidDialog.resx">
       <DependentUpon>BidDialog.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Captcha.tips.resx" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
@@ -116,25 +119,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\位.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\到.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\第.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\前.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\请.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\入.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\输.bmp" />
+    <Folder Include="Resources\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

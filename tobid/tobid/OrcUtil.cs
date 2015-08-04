@@ -108,6 +108,17 @@ namespace tobid.util.orc
         private List<Bitmap> subImgs;
         public List<Bitmap> SubImgs { get { return this.subImgs; } }
 
+        static public OrcUtil getInstance(int[] offsetX, int offsetY, int width, int height, IDictionary<Bitmap, String> dict)
+        {
+            OrcUtil rtn = new OrcUtil();
+            rtn.offsetX = offsetX;
+            rtn.offsetY = offsetY;
+            rtn.width = width;
+            rtn.height = height;
+            rtn.dict = dict;
+            return rtn;
+        }
+
         /// <summary>
         /// 创建Orc实例(from Stream)
         /// </summary>
