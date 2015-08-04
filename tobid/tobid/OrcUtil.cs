@@ -19,11 +19,27 @@ namespace tobid.util.orc
             this.orcNo = no;
             this.orcTips = tips;
         }
+        private List<Bitmap> subImgs;
+        public List<Bitmap> SubImgs { get { return this.subImgs; } }
 
         public String getActive(String captcha, Bitmap bitmapTips)
         {
-            String tips = this.orcTips.getCharFromPic(bitmapTips);
-            String numbers = this.orcNo.getCharFromPic(bitmapTips);
+            String tips = this.orcTips.getCharFromPic(bitmapTips, 0, 0);
+            String numbers = "";
+            if (tips.StartsWith("请输入"))
+                numbers = this.orcNo.getCharFromPic(bitmapTips);
+            else
+            {
+                tips = this.orcTips.getCharFromPic(bitmapTips, 20);
+                numbers = this.orcNo.getCharFromPic(bitmapTips, 20);
+            }
+
+            this.subImgs = new List<Bitmap>();
+            for (int i = 0; i < this.orcTips.SubImgs.Count; i++)
+                this.subImgs.Add(this.orcTips.SubImgs[i]);
+            for (int i = 0; i < this.orcNo.SubImgs.Count; i++)
+                this.subImgs.Add(this.orcNo.SubImgs[i]);
+
             char[] arrayno = numbers.ToCharArray();
             String start = String.Format("{0}", arrayno[0]);
             String end = String.Format("{0}", arrayno[1]);
@@ -149,7 +165,14 @@ namespace tobid.util.orc
             return rtn;
         }
 
-        public String getCharFromPic(Bitmap image)
+        /// <summary>
+        /// 识别图片中的文字
+        /// </summary>
+        /// <param name="image">图片</param>
+        /// <param name="x">x偏移量</param>
+        /// <param name="y">y偏移量</param>
+        /// <returns></returns>
+        public String getCharFromPic(Bitmap image, int x=0, int y=0)
         {
             this.subImgs = new List<Bitmap>();
             image.Save("xxx.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
@@ -157,9 +180,9 @@ namespace tobid.util.orc
             ImageTool it = new ImageTool();
             it.setImage(image);
             it = it.changeToGrayImage().changeToBlackWhiteImage();
-            for(int i=0; i<this.offsetX.Length; i++){
-
-                Rectangle cloneRect = new Rectangle(this.offsetX[i], this.offsetY, this.width, this.height);
+            for (int i = 0; i < this.offsetX.Length; i++)
+            {
+                Rectangle cloneRect = new Rectangle(this.offsetX[i]+x, this.offsetY+y, this.width, this.height);
                 Bitmap subImg = it.Image.Clone(cloneRect, it.Image.PixelFormat);
                 this.subImgs.Add(subImg);
                 String s = OrcUtil.getSingleChar(subImg, this.dict);

@@ -77,15 +77,15 @@ namespace tobid
 
             this.textURL.Text = url;
 
-            this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, new FileStream("price.resx", FileMode.Open));
-            this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, new FileStream("loading.resx", FileMode.Open));
-            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, new FileStream("captcha.tips.resx", FileMode.Open));
-            this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, new FileStream("captcha.tips.no.resx", FileMode.Open));
+            //this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, new FileStream("price.resx", FileMode.Open));
+            //this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, new FileStream("loading.resx", FileMode.Open));
+            //this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, new FileStream("captcha.tips.resx", FileMode.Open));
+            //this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, new FileStream("captcha.tips.no.resx", FileMode.Open));
 
-            //this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
-            //this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
-            //this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
-            //this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 88 }, 0, 7, 16, tipDict + "/no");
+            this.m_orcPrice = OrcUtil.getInstance(new int[] { 0, 10, 20, 30, 40 }, 0, 8, 13, priceDict);
+            this.m_orcCaptchaLoading = OrcUtil.getInstance(new int[] { 0, 16, 32, 48, 64, 80, 96 }, 7, 15, 14, loadingDict);
+            this.m_orcCaptchaTip = OrcUtil.getInstance(new int[] { 0, 16, 32, 48 }, 0, 15, 16, tipDict);
+            this.m_orcCaptchaTipNo = OrcUtil.getInstance(new int[] { 64, 104 }, 0, 7, 16, tipDict + "/no");
             this.m_orcCaptchaUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
 
             SchedulerConfiguration config5M = new SchedulerConfiguration(1000 * 60 * 2);
@@ -303,18 +303,20 @@ namespace tobid
         /// <param name="e"></param>
         private void button5_Click(object sender, EventArgs e)
         {
+            //m_orcCaptchaUtil
             System.Console.WriteLine(String.Format("{0} -- start TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
-            byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 100, 24);
+            byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 140, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
-            String txtTips = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(this.pictureBox3.Image));
-            this.pictureBox4.Image = this.m_orcCaptchaTip.SubImgs[0];
-            this.pictureBox5.Image = this.m_orcCaptchaTip.SubImgs[1];
-            this.pictureBox6.Image = this.m_orcCaptchaTip.SubImgs[2];
-            this.pictureBox7.Image = this.m_orcCaptchaTip.SubImgs[3];
-            
-            this.label1.Text = txtTips;
+            //String txtTips = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(this.pictureBox3.Image));
             this.label2.Text = this.m_orcCaptchaUtil.getActive("123456", new Bitmap(new MemoryStream(content)));
+            PictureBox[] controlls = new PictureBox[]{
+                this.pictureBox4, this.pictureBox5, this.pictureBox6, 
+                this.pictureBox7, this.pictureBox8, this.pictureBox9
+            };
+            for (int i = 0; i < this.m_orcCaptchaUtil.SubImgs.Count; i++)
+                controlls[i].Image = this.m_orcCaptchaUtil.SubImgs[i];
+
             System.Console.WriteLine(String.Format("{0} -- end TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
         }
         
@@ -437,7 +439,7 @@ namespace tobid
             {
                 System.Threading.Thread.Sleep(50);
                 ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);
-                ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+                //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
                 //if (points.Length > 3)
                 //{

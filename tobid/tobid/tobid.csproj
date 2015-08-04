@@ -87,6 +87,7 @@
     <EmbeddedResource Include="BidDialog.resx">
       <DependentUpon>BidDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Captcha.tips.resx" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
@@ -113,6 +114,27 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\位.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\到.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\第.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\前.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\请.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\入.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\输.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
