@@ -115,6 +115,7 @@ namespace tobid.rest
         public int offsetY { get; set; }
         public int width { get; set; }
         public int height { get; set; }
+        public int minNearSpots { get; set; }
     }
 
     public class GlobalConfig
@@ -122,24 +123,9 @@ namespace tobid.rest
         public IList<OrcConfig> orcConfigs { get; set; }
         public String repository { get; set; }
 
-        public OrcConfig price
-        {
-            get { return this.orcConfigs[0]; }
-        }
-
-        public OrcConfig tips
-        {
-            get { return this.orcConfigs[1]; }
-        }
-
-        public OrcConfig tipsNo
-        {
-            get { return this.orcConfigs[2]; }
-        }
-
-        public OrcConfig loading
-        {
-            get { return this.orcConfigs[3]; }
-        }
+        public OrcConfig price{ get { return this.orcConfigs[0]; } }
+        public OrcConfig tips { get { return this.orcConfigs[1]; } }
+        public OrcConfig tipsNo { get { return this.orcConfigs[2]; } }
+        public OrcConfig loading { get { return this.orcConfigs[3]; } }
     }
 }

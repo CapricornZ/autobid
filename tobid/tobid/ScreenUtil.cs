@@ -56,7 +56,7 @@ namespace tobid.util
             Bitmap image = new Bitmap(width, height);
             Graphics imgGraphics = Graphics.FromImage(image);
             imgGraphics.CopyFromScreen(x, y, 0, 0, new Size(width,height));
-            image.Save("e:\\xxx.jpg", ImageFormat.Jpeg);
+            //image.Save("e:\\xxx.jpg", ImageFormat.Jpeg);
         }
 
         public byte[] screenCaptureAsByte(int x, int y, int width, int height)
@@ -66,7 +66,7 @@ namespace tobid.util
             imgGraphics.CopyFromScreen(x, y, 0, 0, new Size(width, height));
             MemoryStream ms = new MemoryStream();
             image.Save(ms, ImageFormat.Bmp);
-            image.Save("e:\\xxx.bmp", ImageFormat.Bmp);
+            //image.Save("e:\\xxx.bmp", ImageFormat.Bmp);
             byte[] bytes = ms.GetBuffer();
             ms.Close();
             return bytes;

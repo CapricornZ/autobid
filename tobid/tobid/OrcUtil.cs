@@ -104,9 +104,17 @@ namespace tobid.util.orc
         private int[] offsetX;
         private int offsetY;
         private int width, height;
+        private int minNearSpots;
         private IDictionary<Bitmap, String> dict;
         private List<Bitmap> subImgs;
         public List<Bitmap> SubImgs { get { return this.subImgs; } }
+
+        static public OrcUtil getInstance(tobid.rest.OrcConfig orcConfig, IDictionary<Bitmap, String> dict)
+        {
+            OrcUtil rtn = getInstance(orcConfig.offsetX, orcConfig.offsetY, orcConfig.width, orcConfig.height, dict);
+            rtn.minNearSpots = orcConfig.minNearSpots;
+            return rtn;
+        }
 
         static public OrcUtil getInstance(int[] offsetX, int offsetY, int width, int height, IDictionary<Bitmap, String> dict)
         {
@@ -191,6 +199,8 @@ namespace tobid.util.orc
             ImageTool it = new ImageTool();
             it.setImage(image);
             it = it.changeToGrayImage().changeToBlackWhiteImage();
+            if (minNearSpots != 0)
+                it = it.removeBadBlock(1, 1, this.minNearSpots);
             for (int i = 0; i < this.offsetX.Length; i++)
             {
                 Rectangle cloneRect = new Rectangle(this.offsetX[i]+x, this.offsetY+y, this.width, this.height);

@@ -409,7 +409,7 @@ namespace tobid
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["DELETE"], 0, 0, 0);
             logger.Info("\tEND   make INPUTBOX blank");
 
-            byte[] content = new ScreenUtil().screenCaptureAsByte(points.captcha[0].x, points.captcha[0].y, 108, 28);
+            byte[] content = new ScreenUtil().screenCaptureAsByte(points.captcha[0].x, points.captcha[0].y, 128, 28);
             this.pictureBox1.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
 
             logger.Info("\tBEGIN postCaptcha");

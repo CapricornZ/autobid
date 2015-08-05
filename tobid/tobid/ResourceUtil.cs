@@ -66,24 +66,23 @@ namespace tobid.util
 
                     String[] array = entry.Name.Split(new char[] { '.', '/' });
                     Bitmap bitmap = new Bitmap(binaryStream);
-                    if (entry.Name.StartsWith("price"))
+                    if (entry.Name.ToLower().StartsWith("price"))
                         dictPrice.Add(bitmap, array[array.Length - 2]);
-                    else if (entry.Name.StartsWith("loading"))
+                    else if (entry.Name.ToLower().StartsWith("loading"))
                         dictLoading.Add(bitmap, array[array.Length - 2]);
-                    else if (entry.Name.StartsWith("captcha.tip"))
+                    else if (entry.Name.ToLower().StartsWith("captcha.tip"))
                     {
-
-                        if (entry.Name.StartsWith("captcha.tip/no"))
+                        if (entry.Name.ToLower().StartsWith("captcha.tip/no"))
                             dictTipsNo.Add(bitmap, array[array.Length - 2]);
                         else
                             dictTips.Add(bitmap, array[array.Length - 2]);
                     }
                 }
             }
-            rtn.m_price = OrcUtil.getInstance(global.price.offsetX, global.price.offsetY, global.price.width, global.price.height, dictPrice);
-            rtn.m_tips = OrcUtil.getInstance(global.tips.offsetX, global.tips.offsetY, global.tips.width, global.tips.height, dictTips);
-            rtn.m_tipsNo = OrcUtil.getInstance(global.tipsNo.offsetX, global.tipsNo.offsetY, global.tipsNo.width, global.tipsNo.height, dictTipsNo);
-            rtn.m_loading = OrcUtil.getInstance(global.loading.offsetX, global.loading.offsetY, global.loading.width, global.loading.height, dictLoading);
+            rtn.m_price = OrcUtil.getInstance(global.price, dictPrice);
+            rtn.m_tips = OrcUtil.getInstance(global.tips, dictTips);
+            rtn.m_tipsNo = OrcUtil.getInstance(global.tipsNo, dictTipsNo);
+            rtn.m_loading = OrcUtil.getInstance(global.loading, dictLoading);
             return rtn;
         }
 
