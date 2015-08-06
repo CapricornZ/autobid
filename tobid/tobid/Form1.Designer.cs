@@ -56,7 +56,6 @@
             this.button6 = new System.Windows.Forms.Button();
             this.radioButton2 = new System.Windows.Forms.RadioButton();
             this.radioButton1 = new System.Windows.Forms.RadioButton();
-            this.textBox4 = new System.Windows.Forms.TextBox();
             this.textURL = new System.Windows.Forms.TextBox();
             this.positionDialog = new tobid.BidDialog();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -118,7 +117,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(9, 49);
+            this.button3.Location = new System.Drawing.Point(65, 49);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(40, 23);
             this.button3.TabIndex = 1;
@@ -135,7 +134,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(126, 49);
+            this.button4.Location = new System.Drawing.Point(19, 49);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(40, 23);
             this.button4.TabIndex = 2;
@@ -154,7 +153,7 @@
             // pictureBox3
             // 
             this.pictureBox3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pictureBox3.Location = new System.Drawing.Point(69, 15);
+            this.pictureBox3.Location = new System.Drawing.Point(69, 14);
             this.pictureBox3.Name = "pictureBox3";
             this.pictureBox3.Size = new System.Drawing.Size(99, 28);
             this.pictureBox3.TabIndex = 0;
@@ -188,7 +187,7 @@
             this.checkBox1.AutoSize = true;
             this.checkBox1.Checked = true;
             this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox1.Location = new System.Drawing.Point(55, 53);
+            this.checkBox1.Location = new System.Drawing.Point(111, 53);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(62, 17);
             this.checkBox1.TabIndex = 22;
@@ -296,7 +295,6 @@
             this.groupBox3.Controls.Add(this.button6);
             this.groupBox3.Controls.Add(this.radioButton2);
             this.groupBox3.Controls.Add(this.radioButton1);
-            this.groupBox3.Controls.Add(this.textBox4);
             this.groupBox3.Controls.Add(this.textURL);
             this.groupBox3.Location = new System.Drawing.Point(409, -1);
             this.groupBox3.Name = "groupBox3";
@@ -308,7 +306,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(57, 62);
+            this.label3.Location = new System.Drawing.Point(20, 62);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(0, 13);
             this.label3.TabIndex = 12;
@@ -357,15 +355,6 @@
             this.radioButton1.UseVisualStyleBackColor = true;
             this.radioButton1.CheckedChanged += new System.EventHandler(this.radioButton1_CheckedChanged);
             // 
-            // textBox4
-            // 
-            this.textBox4.Enabled = false;
-            this.textBox4.Location = new System.Drawing.Point(260, 12);
-            this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(113, 20);
-            this.textBox4.TabIndex = 1;
-            this.textBox4.Text = "/receive/";
-            // 
             // textURL
             // 
             this.textURL.Enabled = false;
@@ -387,6 +376,7 @@
             this.positionDialog.Name = "positionDialog";
             this.positionDialog.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.positionDialog.Text = "坐标配置";
+            this.positionDialog.url = null;
             this.positionDialog.Visible = false;
             // 
             // Form1
@@ -440,7 +430,6 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.TextBox textURL;
-        private System.Windows.Forms.TextBox textBox4;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.PictureBox pictureBox6;

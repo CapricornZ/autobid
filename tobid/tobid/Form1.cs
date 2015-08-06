@@ -29,7 +29,7 @@ namespace tobid
         private void Form1_Resize(object sender, EventArgs e)
         {
             this.webBrowser1.Width = this.Size.Width - 40;
-            this.webBrowser1.Height = this.Size.Height - 98;
+            this.webBrowser1.Height = this.Size.Height - 127;
         }
 
         private static log4net.ILog logger = log4net.LogManager.GetLogger(typeof(Form1));
@@ -68,8 +68,16 @@ namespace tobid
             this.Invoke(update, new object[] { screenPoint.X, screenPoint.Y });
         }
 
+        private Quartz.ISchedulerFactory schedulerFactory;
+        private Quartz.IScheduler scheduler;
         private void Form1_Load(object sender, EventArgs e)
         {
+            Quartz.Xml.XMLSchedulingDataProcessor processor = new Quartz.Xml.XMLSchedulingDataProcessor(new Quartz.Simpl.SimpleTypeLoadHelper());
+            schedulerFactory = new Quartz.Impl.StdSchedulerFactory();
+            scheduler = schedulerFactory.GetScheduler();
+            processor.ProcessFileAndScheduleJobs("~/quartz_jobs.xml", scheduler);
+            scheduler.Start();
+                        
             Form.CheckForIllegalCrossThreadCalls = false;
             this.timer.Enabled = true;
             this.timer.Interval = 1000;
@@ -91,6 +99,8 @@ namespace tobid
 
             //加载配置项1
             IGlobalConfig configResource = Resource.getInstance(url);//加载配置
+
+            this.Text = String.Format("虎牌助手 - {0}", configResource.tag);
             this.m_orcPrice = configResource.Price;//价格识别
             this.m_orcCaptchaLoading = configResource.Loading;//LOADING识别
             this.m_orcCaptchaTip = configResource.Tips;//验证码提示（文字）
@@ -125,6 +135,7 @@ namespace tobid
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
+            this.scheduler.Shutdown();
             if(null != this.timer)
                 this.timer.Close();
 
@@ -220,6 +231,8 @@ namespace tobid
 
             //IntPtr hTray = FindWindowA("IEFrame", null);
             //ShowWindow(hTray, 3);
+
+            //this.webBrowser1.Navigate("http://moni.51hupai.org:8081");
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -394,6 +407,7 @@ namespace tobid
             logger.Info("BEGIN 验证码");
             ScreenUtil.SetCursorPos(points.inputBox.x, points.inputBox.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+            //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
             logger.Info("\tBEGIN make INPUTBOX blank");
             System.Threading.Thread.Sleep(50); ScreenUtil.keybd_event(ScreenUtil.keycode["BACKSPACE"], 0, 0, 0);
@@ -446,7 +460,13 @@ namespace tobid
             {
                 System.Threading.Thread.Sleep(50);
                 ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);
-                //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+                MessageBoxButtons messButton = MessageBoxButtons.OKCancel;
+                DialogResult dr = MessageBox.Show("确定要提交出价吗?", "提交出价", messButton, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+                if (dr == DialogResult.OK)
+                {
+                    ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+                }
+                
 
                 //if (points.Length > 3)
                 //{
@@ -465,6 +485,7 @@ namespace tobid
         /// <param name="e"></param>
         private void button_openDialog(object sender, EventArgs e)
         {
+            this.positionDialog.url = this.textURL.Text;
             this.positionDialog.ShowDialog(this);
             this.positionDialog.BringToFront();
         }
@@ -476,13 +497,13 @@ namespace tobid
         /// <param name="e"></param>
         private void button_sync2Server(object sender, EventArgs e)
         {
-            if (positionDialog.bid != null)
-            {
-                string hostName = System.Net.Dns.GetHostName();
-                string endpoint = this.textURL.Text + "/command/operation/screenconfig/BID/accept.do";
-                RestClient rest = new RestClient(endpoint: endpoint, method: HttpVerb.POST, postObj: this.positionDialog.bid);
-                String response = rest.MakeRequest("?fromHost=" + hostName);
-            }
+            //if (positionDialog.bid != null)
+            //{
+                //string hostName = System.Net.Dns.GetHostName();
+                //string endpoint = this.textURL.Text + "/command/operation/screenconfig/BID/accept.do";
+                //RestClient rest = new RestClient(endpoint: endpoint, method: HttpVerb.POST, postObj: this.positionDialog.bid);
+                //String response = rest.MakeRequest("?fromHost=" + hostName);
+            //}
         }
 
         /// <summary>
@@ -519,5 +540,6 @@ namespace tobid
                 this.submitPriceThread.Start();
             }
         }
+        
     }
 }

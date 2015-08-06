@@ -79,7 +79,7 @@ namespace tobid.scheduler.jobs
         public static void setConfig(rest.Config config, rest.Operation operation)
         {
             logger.Info("setConfig {...}");
-            lock (lockObj)
+            if (Monitor.TryEnter(SubmitPriceJob.lockObj, 500))
             {
                 if (operation.startTime > SubmitPriceJob.startTime)
                 {
@@ -96,6 +96,10 @@ namespace tobid.scheduler.jobs
                     rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
                     SubmitPriceJob.operation = bid;
                 }
+                else
+                {
+                    logger.Error("obtain SubmitPriceJob.lockObj timeout on setConfig(...)");
+                }
             }
         }
 
@@ -104,7 +108,10 @@ namespace tobid.scheduler.jobs
         public void Execute(){
 
             DateTime now = DateTime.Now;
-            logger.Debug(String.Format("{0} - NOW:{1}, {{Expire:{2}, Count:{3}}}", Thread.CurrentThread.Name, now, SubmitPriceJob.expireTime, SubmitPriceJob.executeCount));
+            logger.Debug(String.Format("{0} - NOW:{1}, {{Start:{2}, Expire:{3}, Count:{4}}}", 
+                Thread.CurrentThread.Name, now, 
+                SubmitPriceJob.startTime, SubmitPriceJob.expireTime, 
+                SubmitPriceJob.executeCount));
             if (Monitor.TryEnter(SubmitPriceJob.lockObj, 500))
             {
                 if (now >= SubmitPriceJob.startTime && now <= SubmitPriceJob.expireTime && SubmitPriceJob.executeCount==0)
@@ -120,7 +127,7 @@ namespace tobid.scheduler.jobs
             }
             else
             {
-                logger.Error("obtain SubmitPriceJob.lockObj timeout");
+                logger.Error("obtain SubmitPriceJob.lockObj timeout on Execute(...)");
             }
         }
 

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This file contains job definitions in schema version 2.0 format -->
+
+<job-scheduling-data xmlns="http://quartznet.sourceforge.net/JobSchedulingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0">
+
+  <processing-directives>
+    <overwrite-existing-data>true</overwrite-existing-data>
+  </processing-directives>
+
+  <schedule>
+    <job>
+      <name>KeepAliveJob</name>
+      <group>CommandGroup</group>
+      <description>KeepAlive JOB seding message to server</description>
+      <job-type>tobid.scheduler.quartz.QuartzJob, tobid</job-type>
+      <durable>true</durable>
+      <recover>false</recover>
+      <job-data-map>
+        <entry>
+          <key>key0</key>
+          <value>value0</value>
+        </entry>
+        <entry>
+          <key>key1</key>
+          <value>value1</value>
+        </entry>
+        <entry>
+          <key>key2</key>
+          <value>value2</value>
+        </entry>
+      </job-data-map>
+    </job>
+
+    <trigger>
+      <cron>
+        <name>sampleSimpleTrigger</name>
+        <group>sampleSimpleGroup</group>
+        <description>Simple trigger to simply fire sample job</description>
+        <job-name>KeepAliveJob</job-name>
+        <job-group>CommandGroup</job-group>
+        <cron-expression>0/1 * * * * ?</cron-expression>
+        <!--每3秒中执行一次-->
+      </cron>
+    </trigger>
+  </schedule>
+</job-scheduling-data>

@@ -119,9 +119,10 @@ namespace tobid.rest
     }
 
     public class GlobalConfig
-    {
+    {   
         public IList<OrcConfig> orcConfigs { get; set; }
         public String repository { get; set; }
+        public String tag { get; set; }
 
         public OrcConfig price{ get { return this.orcConfigs[0]; } }
         public OrcConfig tips { get { return this.orcConfigs[1]; } }

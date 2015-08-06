@@ -14,6 +14,7 @@ namespace tobid.util
 {
     public interface IGlobalConfig
     {
+        String tag { get; }
         OrcUtil Price { get; }
         OrcUtil Loading { get; }
         OrcUtil Tips { get; }
@@ -22,10 +23,12 @@ namespace tobid.util
 
     public class Resource : IGlobalConfig
     {
+        private static log4net.ILog logger = log4net.LogManager.GetLogger(typeof(Resource));
         private orc.OrcUtil m_price;
         private orc.OrcUtil m_loading;
         private orc.OrcUtil m_tips;
         private orc.OrcUtil m_tipsNo;
+        private String m_tag;
 
         public static Resource getInstance(String endPoint)
         {
@@ -34,11 +37,30 @@ namespace tobid.util
             String epKeepAlive = endPoint + "/command/global.do";
             RestClient restGlobalConfig = new RestClient(endpoint: epKeepAlive, method: HttpVerb.GET);
 
-            String jsonResponse = restGlobalConfig.MakeRequest(String.Format("?ip={0}", hostName));
-            GlobalConfig global = Newtonsoft.Json.JsonConvert.DeserializeObject<GlobalConfig>(jsonResponse);
+            GlobalConfig global = null;
+            Stream stream = null;
+            String urlResource = null;
+            try
+            {
+                logger.DebugFormat("获取全局配置...【{0}】", String.Format("{0}?ip={1}", epKeepAlive, hostName));
+                String jsonResponse = restGlobalConfig.MakeRequest(String.Format("?ip={0}", hostName));
+                global = Newtonsoft.Json.JsonConvert.DeserializeObject<GlobalConfig>(jsonResponse);
+            }
+            catch (Exception ex)
+            {
+                logger.ErrorFormat("获取全局配置异常:{0}", ex);
+            }
 
-            String urlResource = endPoint + global.repository;
-            Stream stream = new HttpUtil().getAsBinary(urlResource);
+            try
+            {
+                urlResource = endPoint + global.repository;
+                logger.DebugFormat("获取全局配置资源...【{0}】", urlResource);
+                stream = new HttpUtil().getAsBinary(urlResource);
+            }
+            catch (Exception ex)
+            {
+                logger.ErrorFormat("获取全局配置资源异常:{0}", ex);
+            }
 
             IDictionary<Bitmap, String> dictPrice = new Dictionary<Bitmap, String>();
             IDictionary<Bitmap, String> dictLoading = new Dictionary<Bitmap, String>();
@@ -47,11 +69,12 @@ namespace tobid.util
 
             ZipInputStream zip = new ZipInputStream(stream);
             ZipEntry entry = null;
+            logger.Debug("解析资源...");
             while ((entry = zip.GetNextEntry()) != null)
             {
-
                 if (entry.IsFile)
                 {
+                    logger.Debug(entry.Name);
                     MemoryStream binaryStream = new MemoryStream();
                     int size = 2048;
                     byte[] data = new byte[2048];
@@ -79,6 +102,8 @@ namespace tobid.util
                     }
                 }
             }
+
+            rtn.m_tag = global.tag;
             rtn.m_price = OrcUtil.getInstance(global.price, dictPrice);
             rtn.m_tips = OrcUtil.getInstance(global.tips, dictTips);
             rtn.m_tipsNo = OrcUtil.getInstance(global.tipsNo, dictTipsNo);
@@ -86,6 +111,7 @@ namespace tobid.util
             return rtn;
         }
 
+        public String tag { get { return this.m_tag; } }
         public OrcUtil Price { get { return this.m_price; } }
         public OrcUtil Loading { get { return this.m_loading; } }
         public OrcUtil Tips { get { return this.m_tips; } }
