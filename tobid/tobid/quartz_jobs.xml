@@ -39,7 +39,7 @@
         <description>Simple trigger to simply fire sample job</description>
         <job-name>KeepAliveJob</job-name>
         <job-group>CommandGroup</job-group>
-        <cron-expression>0/1 * * * * ?</cron-expression>
+        <cron-expression>0/30 * * * * ?</cron-expression>
         <!--每3秒中执行一次-->
       </cron>
     </trigger>

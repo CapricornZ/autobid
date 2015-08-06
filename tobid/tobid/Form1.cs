@@ -95,8 +95,18 @@ namespace tobid
 
             Ini ini = new Ini(Directory.GetCurrentDirectory() + "/config.ini");
             String url = ini.ReadValue("GLOBAL", "URL");
+            String debug = ini.ReadValue("GLOBAL", "DEBUG");
 
             this.textURL.Text = url;
+            if("true".Equals(debug.ToLower())){
+
+                AllocConsole();
+                SetConsoleTitle("千万不要关掉我");
+                IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+                IntPtr closeMenu = GetSystemMenu(windowHandle, IntPtr.Zero);
+                uint SC_CLOSE = 0xF060;
+                RemoveMenu(closeMenu, SC_CLOSE, 0x0);
+            }
 
             //加载配置项1
             IGlobalConfig configResource = Resource.getInstance(url);//加载配置
@@ -460,11 +470,11 @@ namespace tobid
 
             {
                 System.Threading.Thread.Sleep(50);
-                ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);
                 MessageBoxButtons messButton = MessageBoxButtons.OKCancel;
                 DialogResult dr = MessageBox.Show("确定要提交出价吗?", "提交出价", messButton, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
                 if (dr == DialogResult.OK)
                 {
+                    ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);
                     ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
                 }
                 
