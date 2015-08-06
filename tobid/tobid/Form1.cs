@@ -24,6 +24,7 @@ namespace tobid
         public Form1()
         {
             InitializeComponent();
+            this.SetVisibleCore(true); 
         }
 
         private void Form1_Resize(object sender, EventArgs e)
@@ -77,7 +78,7 @@ namespace tobid
             scheduler = schedulerFactory.GetScheduler();
             processor.ProcessFileAndScheduleJobs("~/quartz_jobs.xml", scheduler);
             scheduler.Start();
-                        
+
             Form.CheckForIllegalCrossThreadCalls = false;
             this.timer.Enabled = true;
             this.timer.Interval = 1000;

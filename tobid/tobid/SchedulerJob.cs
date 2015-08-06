@@ -47,8 +47,8 @@ namespace tobid.scheduler.jobs
             tobid.rest.Client client = Newtonsoft.Json.JsonConvert.DeserializeObject<tobid.rest.Client>(rtn, new OperationConvert());
             if (client.operation != null && client.operation.Length > 0)
             {
-                SubmitPriceJob.setConfig(client.config, client.operation[0]);
-                this.receiveOperation(client.operation[0]);
+                if(SubmitPriceJob.setConfig(client.config, client.operation[0]))
+                    this.receiveOperation(client.operation[0]);
             }
         }
     }
@@ -64,6 +64,7 @@ namespace tobid.scheduler.jobs
         private static rest.Bid operation;
         private static DateTime startTime = new DateTime();
         private static DateTime expireTime = new DateTime();
+        private static DateTime lastUpdate = new DateTime();
         private static int deltaPrice;
         private static int executeCount = 1;
 
@@ -76,13 +77,16 @@ namespace tobid.scheduler.jobs
             this.m_captchaUtil = captchaUtil;
         }
 
-        public static void setConfig(rest.Config config, rest.Operation operation)
+        public static Boolean setConfig(rest.Config config, rest.Operation operation)
         {
             logger.Info("setConfig {...}");
+            Boolean rtn = false;
             if (Monitor.TryEnter(SubmitPriceJob.lockObj, 500))
             {
-                if (operation.startTime > SubmitPriceJob.startTime)
+                //if (operation.startTime > SubmitPriceJob.startTime)
+                if(operation.updateTime > SubmitPriceJob.lastUpdate)//确保同一个版本（修改）的Operation只被配置并执行一次，避免多次执行
                 {
+                    SubmitPriceJob.lastUpdate = operation.updateTime;
                     SubmitPriceJob.executeCount = 0;
 
                     SubmitPriceJob.deltaPrice = ((rest.BidOperation)operation).price;
@@ -95,12 +99,15 @@ namespace tobid.scheduler.jobs
 
                     rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
                     SubmitPriceJob.operation = bid;
+                    rtn = true;
                 }
-                else
-                {
-                    logger.Error("obtain SubmitPriceJob.lockObj timeout on setConfig(...)");
-                }
+                Monitor.Exit(SubmitPriceJob.lockObj);
             }
+            else
+            {
+                logger.Error("obtain SubmitPriceJob.lockObj timeout on setConfig(...)");
+            }
+            return rtn;
         }
 
         public String EndPoint { get; set; }

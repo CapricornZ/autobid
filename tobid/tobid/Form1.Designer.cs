@@ -205,7 +205,7 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(172, 49);
+            this.button5.Location = new System.Drawing.Point(174, 49);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(40, 23);
             this.button5.TabIndex = 3;
@@ -368,7 +368,7 @@
             // 
             this.positionDialog.bid = null;
             this.positionDialog.cancel = false;
-            this.positionDialog.ClientSize = new System.Drawing.Size(237, 300);
+            this.positionDialog.ClientSize = new System.Drawing.Size(245, 311);
             this.positionDialog.Location = new System.Drawing.Point(400, 400);
             this.positionDialog.MaximizeBox = false;
             this.positionDialog.MaximumSize = new System.Drawing.Size(253, 338);
