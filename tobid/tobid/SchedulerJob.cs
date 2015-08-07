@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using System.Drawing;
+using System.Windows.Forms;
 using System.IO;
 using System.Threading;
 
@@ -19,6 +20,29 @@ namespace tobid.scheduler.jobs
     public interface ISchedulerJob
     {
         void Execute();
+    }
+
+    public class ShowInfoJob : ISchedulerJob
+    {
+        private String message;
+        public ShowInfoJob(String message)
+        {
+            this.message = message;
+        }
+
+        public void Execute()
+        {
+            ScreenUtil screen = new ScreenUtil();
+            for (int i = 0; i < 5; i++)
+            {
+                screen.drawSomething(
+                    SystemInformation.WorkingArea.Size.Width - 100,
+                    SystemInformation.WorkingArea.Size.Height - 100,
+                    this.message);
+
+                Thread.Sleep(500);
+            }
+        }
     }
 
     /// <summary>
@@ -69,11 +93,14 @@ namespace tobid.scheduler.jobs
         private static int executeCount = 1;
 
         private OrcUtil m_orcPrice;
+        private OrcUtil m_orcLoading;
         private CaptchaUtil m_captchaUtil;
-        public SubmitPriceJob(String endPoint, OrcUtil orcUtil, CaptchaUtil captchaUtil)
+        
+        public SubmitPriceJob(String endPoint, OrcUtil orcUtil, OrcUtil orcLoading, CaptchaUtil captchaUtil)
         {
             this.EndPoint = endPoint;
             this.m_orcPrice = orcUtil;
+            this.m_orcLoading = orcLoading;
             this.m_captchaUtil = captchaUtil;
         }
 
@@ -123,6 +150,8 @@ namespace tobid.scheduler.jobs
             {
                 if (now >= SubmitPriceJob.startTime && now <= SubmitPriceJob.expireTime && SubmitPriceJob.executeCount==0)
                 {
+                    //TODO:这里可以加入逻辑，如果this.submit成功，SubmitPriceJob.executeCount++。
+                    //这样在下一秒可以自动执行一次未成功的出价。但是DeltaPrice应该-=100，同时需要保证DeltaPrice>=+300
                     SubmitPriceJob.executeCount++;
                     logger.Debug("trigger Fired");
 
@@ -187,7 +216,7 @@ namespace tobid.scheduler.jobs
             logger.Info("END   givePRICE");
         }
 
-        private void submit(String URL, rest.SubmitPrice submitPoints)
+        private Boolean submit(String URL, rest.SubmitPrice submitPoints)
         {
             logger.Info("BEGIN giveCAPTCHA");
             logger.Info("\tBEGIN make INPUT blank");
@@ -208,7 +237,30 @@ namespace tobid.scheduler.jobs
             logger.Info("\tEND   make INPUT blank");
 
             logger.Info("\tBEGIN identify CAPTCHA...");
-            byte[] binaryCaptcha = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[0].x, submitPoints.captcha[0].y, 128, 28);
+            byte[] binaryCaptcha = null;
+            Boolean isLoading = true;
+            int retry = 0;
+            while (isLoading)
+            {
+                logger.InfoFormat("\t try LOADING = {0}", retry++);
+                binaryCaptcha = new ScreenUtil().screenCaptureAsByte(submitPoints.captcha[0].x, submitPoints.captcha[0].y, 128, 28);
+                String strLoading = this.m_orcLoading.getCharFromPic(new Bitmap(new MemoryStream(binaryCaptcha)));
+                logger.InfoFormat("\t LOADING = {0}", strLoading);
+                if ("正在获取校验码".Equals(strLoading))
+                {
+                    if (retry > 2)
+                    {//重试0,1,2,3都在获取校验码
+                        logger.InfoFormat("Abort，close & re-open");
+                        ScreenUtil.SetCursorPos(submitPoints.buttons[0].x+188, submitPoints.buttons[0].y);//取消按钮
+                        ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+                        return false;//放弃本次出价
+                    }
+                    Thread.Sleep(250);
+                }
+                else
+                    isLoading = false;
+            }
+
             logger.Info("\t\tBEGIN post CAPTACH");
             String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", binaryCaptcha);
             logger.Info("\t\tEND   post CAPTACH");
@@ -231,6 +283,8 @@ namespace tobid.scheduler.jobs
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
             logger.Info("\tEND   click BUTTON[确定]");
 
+            ScreenUtil.SetCursorPos(submitPoints.buttons[0].x + 188 / 2, submitPoints.buttons[0].y - 10);//确定按钮
+
             //System.Threading.Thread.Sleep(3000);
             //if (points.Length > 2)
             //{
@@ -246,6 +300,7 @@ namespace tobid.scheduler.jobs
             //    }
             //}
             logger.Info("END   giveCAPTCHA");
+            return true;
         }
     }
 }

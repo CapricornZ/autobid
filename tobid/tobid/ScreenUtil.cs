@@ -27,6 +27,15 @@ namespace tobid.util
 
     class ScreenUtil
     {
+        [DllImport("User32.dll")]
+        public extern static System.IntPtr GetDC(System.IntPtr hWnd);
+        [DllImport("user32.dll")]
+        public static extern int SetCursorPos(int x, int y);
+        [DllImport("user32.dll")]
+        public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, IntPtr dwExtraInfo);
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
         public static IDictionary<string, byte> keycode = new Dictionary<string, byte>();
         static ScreenUtil(){
             keycode.Add("0", 48);
@@ -44,12 +53,16 @@ namespace tobid.util
             keycode.Add("+", 48);
         }
 
-        [DllImport("user32.dll")]
-        public static extern int SetCursorPos(int x, int y);
-        [DllImport("user32.dll")]
-        public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, IntPtr dwExtraInfo);
-        [DllImport("user32.dll")]
-        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+        public void drawSomething(int x, int y, String something)
+        {
+            System.IntPtr DesktopHandle = GetDC(System.IntPtr.Zero);
+            Graphics g = Graphics.FromHdc(DesktopHandle);
+            //g.DrawRectangle(new Pen(Color.Red), new Rectangle(10, 10, 100, 100));
+
+            SolidBrush brush = new SolidBrush(Color.Red);
+            Font font = new System.Drawing.Font("黑体",16);
+            g.DrawString(something, font, brush, new PointF(x, y));
+        }
 
         public void screenCapture(int x, int y, int width, int height){
 

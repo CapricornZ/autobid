@@ -38,7 +38,7 @@ namespace tobid
         private OrcUtil m_orcCaptchaLoading;
         private OrcUtil m_orcCaptchaTip;
         private OrcUtil m_orcCaptchaTipNo;
-        private CaptchaUtil m_orcCaptchaUtil;
+        private CaptchaUtil m_orcCaptchaTipsUtil;
 
         private System.Threading.Thread keepAliveThread;
         private System.Threading.Thread submitPriceThread;
@@ -55,10 +55,24 @@ namespace tobid
 
         private void receiveOperation(rest.Operation operation)
         {
-            rest.BidOperation bidOps = (rest.BidOperation)operation;
-            rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
-            this.positionDialog.bid = bid;
-            this.label3.Text = String.Format("配置：+{5} @[{4}], 价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y, operation.startTime, bidOps.price);
+            try
+            {   
+                //ShowInfoJob showInfo = new ShowInfoJob("MESSAGE!");
+                //System.Threading.ThreadStart myThreadDelegate = new System.Threading.ThreadStart(showInfo.Execute);
+                //System.Threading.Thread myThread = new System.Threading.Thread(myThreadDelegate);
+                //myThread.Start();
+            }
+            catch
+            {
+            }
+
+            if (null != operation)
+            {
+                rest.BidOperation bidOps = (rest.BidOperation)operation;
+                rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
+                this.positionDialog.bid = bid;
+                this.label3.Text = String.Format("配置：+{5} @[{4}], 价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y, operation.startTime, bidOps.price);
+            }
         }
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -81,7 +95,7 @@ namespace tobid
 
             Form.CheckForIllegalCrossThreadCalls = false;
             this.timer.Enabled = true;
-            this.timer.Interval = 1000;
+            this.timer.Interval = 500;
             this.timer.Start();
             this.timer.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Elapsed);
 
@@ -101,7 +115,7 @@ namespace tobid
             if("true".Equals(debug.ToLower())){
 
                 AllocConsole();
-                SetConsoleTitle("千万不要关掉我");
+                SetConsoleTitle("千万不要关掉我!");
                 IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
                 IntPtr closeMenu = GetSystemMenu(windowHandle, IntPtr.Zero);
                 uint SC_CLOSE = 0xF060;
@@ -111,12 +125,12 @@ namespace tobid
             //加载配置项1
             IGlobalConfig configResource = Resource.getInstance(url);//加载配置
 
-            this.Text = String.Format("虎牌助手 - {0}", configResource.tag);
+            this.Text = String.Format("虎牌帮帮忙 - {0}", configResource.tag);
             this.m_orcPrice = configResource.Price;//价格识别
             this.m_orcCaptchaLoading = configResource.Loading;//LOADING识别
             this.m_orcCaptchaTip = configResource.Tips;//验证码提示（文字）
             this.m_orcCaptchaTipNo = configResource.TipsNo;//验证码提示（数字）
-            this.m_orcCaptchaUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
+            this.m_orcCaptchaTipsUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
 
             //加载配置项2
             KeepAliveJob keepAliveJob = new KeepAliveJob(url, new ReceiveOperation(this.receiveOperation));
@@ -140,13 +154,15 @@ namespace tobid
 
             //Action任务配置
             SchedulerConfiguration config1S = new SchedulerConfiguration(1000);
-            config1S.Job = new SubmitPriceJob(url, this.m_orcPrice, this.m_orcCaptchaUtil);
+            config1S.Job = new SubmitPriceJob(url, this.m_orcPrice, this.m_orcCaptchaLoading, this.m_orcCaptchaTipsUtil);
             m_schedulerSubmit = new Scheduler(config1S);
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            this.scheduler.Shutdown();
+            if(null != this.scheduler)
+                this.scheduler.Shutdown();
+
             if(null != this.timer)
                 this.timer.Close();
 
@@ -229,7 +245,7 @@ namespace tobid
         public static extern bool SetConsoleTitle(string strMessage);
 
         private void button1_Click(object sender, EventArgs e)
-        {   
+        {
             //AllocConsole();
             //SetConsoleTitle("千万不要关掉我");
             //IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
@@ -248,6 +264,7 @@ namespace tobid
 
         private void button2_Click(object sender, EventArgs e)
         {
+            /*
             HtmlElement number = this.webBrowser1.Document.Window.Frames[0].Document.All["number"];
             number.SetAttribute("value", "123456");
 
@@ -269,6 +286,7 @@ namespace tobid
 
             HtmlElement query = this.webBrowser1.Document.Window.Frames[0].Document.All["btnquery"];
             query.InvokeMember("click");
+            */
         }
 
         /// <summary>
@@ -303,6 +321,8 @@ namespace tobid
                 this.pictureBox5.Image = this.m_orcCaptchaLoading.SubImgs[1];
                 this.pictureBox6.Image = this.m_orcCaptchaLoading.SubImgs[2];
                 this.pictureBox7.Image = this.m_orcCaptchaLoading.SubImgs[3];
+                this.pictureBox7.Image = this.m_orcCaptchaLoading.SubImgs[4];
+                this.pictureBox7.Image = this.m_orcCaptchaLoading.SubImgs[5];
                 this.label2.Text = strLoading;
             }
         }
@@ -342,13 +362,13 @@ namespace tobid
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 140, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
             //String txtTips = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(this.pictureBox3.Image));
-            this.label2.Text = this.m_orcCaptchaUtil.getActive("123456", new Bitmap(new MemoryStream(content)));
+            this.label2.Text = this.m_orcCaptchaTipsUtil.getActive("123456", new Bitmap(new MemoryStream(content)));
             PictureBox[] controlls = new PictureBox[]{
                 this.pictureBox4, this.pictureBox5, this.pictureBox6, 
                 this.pictureBox7, this.pictureBox8, this.pictureBox9
             };
-            for (int i = 0; i < this.m_orcCaptchaUtil.SubImgs.Count; i++)
-                controlls[i].Image = this.m_orcCaptchaUtil.SubImgs[i];
+            for (int i = 0; i < this.m_orcCaptchaTipsUtil.SubImgs.Count; i++)
+                controlls[i].Image = this.m_orcCaptchaTipsUtil.SubImgs[i];
 
             System.Console.WriteLine(String.Format("{0} -- end TEST TIPs --", DateTime.Now.ToString("HH:mm:ss.ffff")));
         }
@@ -436,6 +456,34 @@ namespace tobid
 
             byte[] content = new ScreenUtil().screenCaptureAsByte(points.captcha[0].x, points.captcha[0].y, 128, 28);
             this.pictureBox1.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
+            String strLoading = this.m_orcCaptchaLoading.getCharFromPic(new Bitmap(new MemoryStream(content)));
+            logger.InfoFormat("LOADING : {0}", strLoading);
+            if ("正在获取校验码".Equals(strLoading))
+            {
+                logger.InfoFormat("正在获取校验码，关闭&打开窗口重新获取");
+                ScreenUtil.SetCursorPos(points.buttons[0].x+188, points.buttons[0].y);//取消按钮
+                ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+                return;
+            }
+
+            //byte[] content = null;
+            //Boolean isLoading = true;
+            //int retry = 0;
+            //while (isLoading)
+            //{
+            //    content = new ScreenUtil().screenCaptureAsByte(points.captcha[0].x, points.captcha[0].y, 128, 28);
+            //    String strLoading = this.m_orcCaptchaLoading.getCharFromPic(new Bitmap(new MemoryStream(content)));
+            //    logger.InfoFormat("\t try to LOADING = {0}", strLoading);
+            //    if ("正在获取校验码".Equals(strLoading))
+            //    {
+            //        if (retry > 3)//4次都在获取
+            //            return;//放弃本次出价
+            //        logger.InfoFormat("\t re-try {0}", ++retry);
+            //        System.Threading.Thread.Sleep(250);
+            //    }
+            //    else
+            //        isLoading = false;
+            //}
 
             logger.Info("\tBEGIN postCaptcha");
             String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", content);
@@ -474,7 +522,18 @@ namespace tobid
                 DialogResult dr = MessageBox.Show("确定要提交出价吗?", "提交出价", messButton, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
                 if (dr == DialogResult.OK)
                 {
-                    ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);
+                    logger.InfoFormat("用户选择确定出价");
+                    ScreenUtil.SetCursorPos(points.buttons[0].x, points.buttons[0].y);//确定按钮
+                    ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+
+                    System.Threading.Thread.Sleep(1000);
+                    ScreenUtil.SetCursorPos(points.buttons[0].x + 188 / 2, points.buttons[0].y - 10);//确定按钮
+                    //ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
+                }
+                else
+                {
+                    logger.InfoFormat("用户选择取消出价");
+                    ScreenUtil.SetCursorPos(points.buttons[0].x + 188, points.buttons[0].y);//取消按钮
                     ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
                 }
                 
@@ -526,8 +585,10 @@ namespace tobid
         {
             if (this.radioButton1.Checked)
             {
-                this.keepAliveThread.Abort();
-                this.submitPriceThread.Abort();
+                if(null != this.keepAliveThread)
+                    this.keepAliveThread.Abort();
+                if(null != this.submitPriceThread)
+                    this.submitPriceThread.Abort();
             }
         }
 
@@ -551,6 +612,5 @@ namespace tobid
                 this.submitPriceThread.Start();
             }
         }
-        
     }
 }

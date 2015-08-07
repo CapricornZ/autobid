@@ -30,8 +30,8 @@ namespace tobid.util.orc
                 numbers = this.orcNo.getCharFromPic(bitmapTips);
             else
             {
-                tips = this.orcTips.getCharFromPic(bitmapTips, 20);
-                numbers = this.orcNo.getCharFromPic(bitmapTips, 20);
+                tips = this.orcTips.getCharFromPic(bitmapTips, x:20);
+                numbers = this.orcNo.getCharFromPic(bitmapTips, x:20);
             }
 
             this.subImgs = new List<Bitmap>();
