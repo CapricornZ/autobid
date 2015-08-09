@@ -11,6 +11,8 @@ using System.IO;
 using mshtml;
 
 using tobid.rest;
+using tobid.rest.position;
+
 using tobid.scheduler;
 using tobid.scheduler.jobs;
 using tobid.util;
@@ -69,7 +71,7 @@ namespace tobid
             if (null != operation)
             {
                 rest.BidOperation bidOps = (rest.BidOperation)operation;
-                rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
+                Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<Bid>(operation.content);
                 this.positionDialog.bid = bid;
                 this.label3.Text = String.Format("配置：+{5} @[{4}], 价格[{0},{1}], 校验码[{2},{3}]", bid.give.price.x, bid.give.price.y, bid.submit.captcha[0].x, bid.submit.captcha[0].y, operation.startTime, bidOps.price);
             }
@@ -87,11 +89,11 @@ namespace tobid
         private Quartz.IScheduler scheduler;
         private void Form1_Load(object sender, EventArgs e)
         {
-            Quartz.Xml.XMLSchedulingDataProcessor processor = new Quartz.Xml.XMLSchedulingDataProcessor(new Quartz.Simpl.SimpleTypeLoadHelper());
-            schedulerFactory = new Quartz.Impl.StdSchedulerFactory();
-            scheduler = schedulerFactory.GetScheduler();
-            processor.ProcessFileAndScheduleJobs("~/quartz_jobs.xml", scheduler);
-            scheduler.Start();
+            //Quartz.Xml.XMLSchedulingDataProcessor processor = new Quartz.Xml.XMLSchedulingDataProcessor(new Quartz.Simpl.SimpleTypeLoadHelper());
+            //schedulerFactory = new Quartz.Impl.StdSchedulerFactory();
+            //scheduler = schedulerFactory.GetScheduler();
+            //processor.ProcessFileAndScheduleJobs("~/quartz_jobs.xml", scheduler);
+            //scheduler.Start();
 
             Form.CheckForIllegalCrossThreadCalls = false;
             this.timer.Enabled = true;
@@ -391,7 +393,7 @@ namespace tobid
             this.subimt(this.textURL.Text, this.positionDialog.bid.submit, type);
         }
 
-        private void givePrice(String URL, rest.GivePrice points, int deltaPrice)
+        private void givePrice(String URL, GivePrice points, int deltaPrice)
         {
             logger.Info("BEGIN 出价格");
             byte[] content = new ScreenUtil().screenCaptureAsByte(points.price.x, points.price.y, 52, 18);
@@ -433,7 +435,7 @@ namespace tobid
             logger.Info("END   出价格");
         }
 
-        private void subimt(String URL, rest.SubmitPrice points, int type)
+        private void subimt(String URL, SubmitPrice points, int type)
         {
             logger.Info("BEGIN 验证码");
             ScreenUtil.SetCursorPos(points.inputBox.x, points.inputBox.y);

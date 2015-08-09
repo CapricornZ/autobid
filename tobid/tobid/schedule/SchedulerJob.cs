@@ -9,6 +9,7 @@ using System.IO;
 using System.Threading;
 
 using tobid.rest.json;
+using tobid.rest.position;
 using tobid.util.http;
 using tobid.util.orc;
 using tobid.util;
@@ -71,8 +72,18 @@ namespace tobid.scheduler.jobs
             tobid.rest.Client client = Newtonsoft.Json.JsonConvert.DeserializeObject<tobid.rest.Client>(rtn, new OperationConvert());
             if (client.operation != null && client.operation.Length > 0)
             {
-                if(SubmitPriceJob.setConfig(client.config, client.operation[0]))
-                    this.receiveOperation(client.operation[0]);
+                foreach (tobid.rest.Operation operation in client.operation)
+                {
+                    if(operation is tobid.rest.BidOperation){
+
+                        if (SubmitPriceJob.setConfig(client.config, operation))
+                            this.receiveOperation(operation);
+                    }
+                    else if (operation is tobid.rest.LoginOperation)
+                    {
+                        LoginJob.setConfig(client.config, operation);
+                    }
+                }
             }
         }
     }
@@ -85,21 +96,22 @@ namespace tobid.scheduler.jobs
         private static log4net.ILog logger = log4net.LogManager.GetLogger(typeof(SubmitPriceJob));
         private static Object lockObj = new Object();
 
-        private static rest.Bid operation;
+        private static Bid operation;
         private static DateTime startTime = new DateTime();
         private static DateTime expireTime = new DateTime();
         private static DateTime lastUpdate = new DateTime();
         private static int deltaPrice;
         private static int executeCount = 1;
 
+        public String EndPoint { get; set; }
         private OrcUtil m_orcPrice;
         private OrcUtil m_orcLoading;
         private CaptchaUtil m_captchaUtil;
         
-        public SubmitPriceJob(String endPoint, OrcUtil orcUtil, OrcUtil orcLoading, CaptchaUtil captchaUtil)
+        public SubmitPriceJob(String endPoint, OrcUtil orcPrice, OrcUtil orcLoading, CaptchaUtil captchaUtil)
         {
             this.EndPoint = endPoint;
-            this.m_orcPrice = orcUtil;
+            this.m_orcPrice = orcPrice;
             this.m_orcLoading = orcLoading;
             this.m_captchaUtil = captchaUtil;
         }
@@ -124,7 +136,7 @@ namespace tobid.scheduler.jobs
                     logger.DebugFormat("startTime:{0}", operation.startTime);
                     logger.DebugFormat("expireTime:{0}", operation.expireTime);
 
-                    rest.Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<rest.Bid>(operation.content);
+                    Bid bid = Newtonsoft.Json.JsonConvert.DeserializeObject<Bid>(operation.content);
                     SubmitPriceJob.operation = bid;
                     rtn = true;
                 }
@@ -136,8 +148,6 @@ namespace tobid.scheduler.jobs
             }
             return rtn;
         }
-
-        public String EndPoint { get; set; }
 
         public void Execute(){
 
@@ -172,7 +182,7 @@ namespace tobid.scheduler.jobs
         /// </summary>
         /// <param name="givePrice">坐标</param>
         /// <param name="delta">差价</param>
-        private void givePrice(rest.GivePrice givePrice, int delta)
+        private void givePrice(GivePrice givePrice, int delta)
         {
             logger.Info("BEGIN givePRICE");
             logger.Info("\tBEGIN identify PRICE...");
@@ -184,7 +194,7 @@ namespace tobid.scheduler.jobs
             logger.InfoFormat("\tEND   identified PRICE = %s", txtPrice);
 
             //INPUT BOX
-            logger.Info("\tBEGIN input PRICE");
+            logger.InfoFormat("\tBEGIN input PRICE : {0}", txtPrice);
             ScreenUtil.SetCursorPos(givePrice.inputBox.x, givePrice.inputBox.y);
             ScreenUtil.mouse_event((int)(MouseEventFlags.Absolute | MouseEventFlags.LeftDown | MouseEventFlags.LeftUp), 0, 0, 0, IntPtr.Zero);
 
@@ -216,7 +226,7 @@ namespace tobid.scheduler.jobs
             logger.Info("END   givePRICE");
         }
 
-        private Boolean submit(String URL, rest.SubmitPrice submitPoints)
+        private Boolean submit(String URL, SubmitPrice submitPoints)
         {
             logger.Info("BEGIN giveCAPTCHA");
             logger.Info("\tBEGIN make INPUT blank");

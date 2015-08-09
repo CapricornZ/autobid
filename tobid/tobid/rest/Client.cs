@@ -59,6 +59,9 @@ namespace tobid.rest
     /// </summary>
     public class LoginOperation : Operation
     {
+        public String bidNo { get; set; }
+        public String bidPasswd { get; set; }
+        public String idCard { get; set; }
     }
 
     /// <summary>
@@ -67,66 +70,5 @@ namespace tobid.rest
     public class Step1Operation : Operation
     {
         public int price { get; set; }
-    }
-
-    public class Position
-    {
-        public Position(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-        public int x { get; set; }
-        public int y { get; set; }
-    }
-
-    /// <summary>
-    /// 出价的坐标
-    /// </summary>
-    public class GivePrice
-    {
-        public Position price { get; set; }
-        public Position inputBox { get; set; }
-        public Position button { get; set; }
-    }
-
-    /// <summary>
-    /// 出价验证码坐标
-    /// </summary>
-    public class SubmitPrice
-    {
-        public Position[] captcha { get; set; }
-        public Position inputBox { get; set; }
-        public Position[] buttons { get; set; }
-    }
-
-    /// <summary>
-    /// 竞价
-    /// </summary>
-    public class Bid
-    {
-        public GivePrice give { get; set; }
-        public SubmitPrice submit { get; set; }
-    }
-
-    public class OrcConfig
-    {
-        public int[] offsetX { get; set; }
-        public int offsetY { get; set; }
-        public int width { get; set; }
-        public int height { get; set; }
-        public int minNearSpots { get; set; }
-    }
-
-    public class GlobalConfig
-    {   
-        public IList<OrcConfig> orcConfigs { get; set; }
-        public String repository { get; set; }
-        public String tag { get; set; }
-
-        public OrcConfig price{ get { return this.orcConfigs[0]; } }
-        public OrcConfig tips { get { return this.orcConfigs[1]; } }
-        public OrcConfig tipsNo { get { return this.orcConfigs[2]; } }
-        public OrcConfig loading { get { return this.orcConfigs[3]; } }
     }
 }
