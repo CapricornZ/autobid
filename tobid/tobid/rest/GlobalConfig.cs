@@ -21,8 +21,9 @@ namespace tobid.rest
         public String tag { get; set; }
 
         public OrcConfig price { get { return this.orcConfigs[0]; } }
-        public OrcConfig tips { get { return this.orcConfigs[1]; } }
-        public OrcConfig tipsNo { get { return this.orcConfigs[2]; } }
-        public OrcConfig loading { get { return this.orcConfigs[3]; } }
+        public OrcConfig tips0 { get { return this.orcConfigs[1]; } }
+        public OrcConfig tips1 { get { return this.orcConfigs[2]; } }
+        public OrcConfig tipsNo { get { return this.orcConfigs[3]; } }
+        public OrcConfig loading { get { return this.orcConfigs[4]; } }
     }
 }

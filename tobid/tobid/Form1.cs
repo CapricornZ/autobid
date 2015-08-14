@@ -38,7 +38,7 @@ namespace tobid
         private static log4net.ILog logger = log4net.LogManager.GetLogger(typeof(Form1));
         private OrcUtil m_orcPrice;
         private OrcUtil m_orcCaptchaLoading;
-        private OrcUtil m_orcCaptchaTip;
+        private OrcUtil[] m_orcCaptchaTip;
         private OrcUtil m_orcCaptchaTipNo;
         private CaptchaUtil m_orcCaptchaTipsUtil;
 
@@ -108,6 +108,7 @@ namespace tobid
             Hotkey.RegisterHotKey(this.Handle, 111, Hotkey.KeyModifiers.Ctrl, Keys.Left);
             Hotkey.RegisterHotKey(this.Handle, 110, Hotkey.KeyModifiers.Ctrl, Keys.Up);
             Hotkey.RegisterHotKey(this.Handle, 112, Hotkey.KeyModifiers.Ctrl, Keys.Right);
+            Hotkey.RegisterHotKey(this.Handle, 155, Hotkey.KeyModifiers.Ctrl, Keys.Enter);
 
             Ini ini = new Ini(Directory.GetCurrentDirectory() + "/config.ini");
             String url = ini.ReadValue("GLOBAL", "URL");
@@ -116,12 +117,12 @@ namespace tobid
             this.textURL.Text = url;
             if("true".Equals(debug.ToLower())){
 
-                AllocConsole();
-                SetConsoleTitle("千万不要关掉我!");
-                IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-                IntPtr closeMenu = GetSystemMenu(windowHandle, IntPtr.Zero);
-                uint SC_CLOSE = 0xF060;
-                RemoveMenu(closeMenu, SC_CLOSE, 0x0);
+                //AllocConsole();
+                //SetConsoleTitle("千万不要关掉我!");
+                //IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+                //IntPtr closeMenu = GetSystemMenu(windowHandle, IntPtr.Zero);
+                //uint SC_CLOSE = 0xF060;
+                //RemoveMenu(closeMenu, SC_CLOSE, 0x0);
             }
 
             //加载配置项1
@@ -132,7 +133,7 @@ namespace tobid
             this.m_orcCaptchaLoading = configResource.Loading;//LOADING识别
             this.m_orcCaptchaTip = configResource.Tips;//验证码提示（文字）
             this.m_orcCaptchaTipNo = configResource.TipsNo;//验证码提示（数字）
-            this.m_orcCaptchaTipsUtil = new CaptchaUtil(m_orcCaptchaTip, m_orcCaptchaTipNo);
+            this.m_orcCaptchaTipsUtil = new CaptchaUtil(m_orcCaptchaTip[0], m_orcCaptchaTip[1], m_orcCaptchaTipNo);
 
             //加载配置项2
             KeepAliveJob keepAliveJob = new KeepAliveJob(url, new ReceiveOperation(this.receiveOperation));
@@ -175,6 +176,7 @@ namespace tobid
             Hotkey.UnregisterHotKey(this.Handle, 110);
             Hotkey.UnregisterHotKey(this.Handle, 111);
             Hotkey.UnregisterHotKey(this.Handle, 112);
+            Hotkey.UnregisterHotKey(this.Handle, 155);
 
             if (null != this.keepAliveThread)
                 this.keepAliveThread.Abort();
@@ -218,6 +220,10 @@ namespace tobid
                             System.Console.WriteLine("HOT KEY 112");
                             this.process(2);//出验证码后4位
                             break;
+                        case 155://ENTER
+                            System.Console.WriteLine("HOT KEY 155");
+                            this.textBox2.Text = this.textBox1.Text;
+                            break;
                     }
                     break;
             }
@@ -246,8 +252,56 @@ namespace tobid
         [System.Runtime.InteropServices.DllImport("Kernel32.dll")]
         public static extern bool SetConsoleTitle(string strMessage);
 
+        private Boolean isWhite(Color color)
+        {
+            return (color.R == color.G && color.R == 255);
+        }
         private void button1_Click(object sender, EventArgs e)
         {
+
+            FileStream fs = File.OpenRead("e:/cap.bmp");
+            byte[] content = new byte[fs.Length];
+            fs.Read(content, 0, (int)fs.Length);
+            fs.Close();
+            Bitmap bit = new Bitmap(new MemoryStream(content));
+            Point point = ScreenUtil.scan(bit);
+
+            Rectangle cloneRect = new Rectangle(point.X, point.Y, bit.Width-point.X, bit.Height-point.Y);
+            Bitmap subImg = bit.Clone(cloneRect, bit.PixelFormat);
+            this.pictureBox1.Image = subImg;
+            subImg.Save("e:/capSub.bmp");
+
+            ImageTool it = new ImageTool();
+            it.setImage(bit);
+            it.middleValueFilter(50, true).changeToGrayImage().changeToBlackWhiteImage().removeBadBlock(1, 1, 4);
+            it.Image.Save("e:/capDone.bmp");
+
+            Point start = new Point();
+            for(int x=0; x<it.Image.Width; x++){
+                int white = 0;
+                for (int y = 0; y < it.Image.Height; y++)
+                {
+                    if (isWhite(it.Image.GetPixel(x, y)))
+                        white++;
+                }
+
+                if (it.Image.Height - white > 1)
+                {
+                    start.X = x;
+                    break;
+                }
+            }
+
+            for (int y = 0; y < it.Image.Height; y++)
+            {
+                int white = 0;
+                for (int x = start.X; x < 15; x++)
+                {
+                    if (isWhite(it.Image.GetPixel(x, y)))
+                        white++;
+                }
+                Console.WriteLine("row:" + white);
+            }
             //AllocConsole();
             //SetConsoleTitle("千万不要关掉我");
             //IntPtr windowHandle = FindWindow(null, System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
@@ -298,13 +352,25 @@ namespace tobid
         /// <param name="e"></param>
         private void button3_captcha_Click(object sender, EventArgs e)
         {
+            ScreenUtil screen = new ScreenUtil();
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
-            byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 28);
+            byte[] content = screen.screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 120, 38);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
+            
+            #region DEBUG
+            File.WriteAllBytes("captcha.bmp", content);
+            //Bitmap subImg = screen.subImage(new Bitmap(new MemoryStream(content)));
+            //this.pictureBox3.Image = subImg;
+            //MemoryStream ms = new MemoryStream();
+            //subImg.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
+            //content = ms.ToArray();
+            //ms.Close();
+            #endregion
+            
 
             if (this.checkBox1.Checked)//如果选中“校验码”
             {
-                String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha/detail.do", content);
+                String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/dynamic/captcha/detail.do", content);
                 String[] array = Newtonsoft.Json.JsonConvert.DeserializeObject<String[]>(txtCaptcha);
 
                 this.pictureBox4.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[0])));
@@ -314,6 +380,9 @@ namespace tobid
                 this.pictureBox8.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[4])));
                 this.pictureBox9.Image = new Bitmap(new MemoryStream(Convert.FromBase64String(array[5])));
                 this.label1.Text = array[6];
+                //String txtCaptcha = new HttpUtil().postByteAsFile(this.textURL.Text + "/receive/captcha/red.do", content);
+                //this.label1.Text = txtCaptcha;
+
             }
             else//测试“正在加载校验码”
             {
@@ -363,6 +432,9 @@ namespace tobid
             String[] pos = this.textBox2.Text.Split(new char[] { ',' });
             byte[] content = new ScreenUtil().screenCaptureAsByte(Int32.Parse(pos[0]), Int32.Parse(pos[1]), 140, 24);
             this.pictureBox3.Image = Bitmap.FromStream(new System.IO.MemoryStream(content));
+            #region DEBUG
+            File.WriteAllBytes("tips.bmp", content);
+            #endregion
             //String txtTips = this.m_orcCaptchaTip.getCharFromPic(new Bitmap(this.pictureBox3.Image));
             this.label2.Text = this.m_orcCaptchaTipsUtil.getActive("123456", new Bitmap(new MemoryStream(content)));
             PictureBox[] controlls = new PictureBox[]{
@@ -488,7 +560,7 @@ namespace tobid
             //}
 
             logger.Info("\tBEGIN postCaptcha");
-            String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/captcha.do", content);
+            String txtCaptcha = new HttpUtil().postByteAsFile(URL + "/receive/dynamic/captcha.do", content);
             logger.Info("\tEND   postCaptcha");
 
             logger.Info("\tBEGIN input ACTIVE CAPTCHA [" + type + "]");

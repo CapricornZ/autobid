@@ -58,6 +58,7 @@
             this.radioButton1 = new System.Windows.Forms.RadioButton();
             this.textURL = new System.Windows.Forms.TextBox();
             this.positionDialog = new tobid.BidDialog();
+            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
@@ -70,6 +71,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).BeginInit();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
             // webBrowser1
@@ -290,6 +292,7 @@
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.numericUpDown1);
             this.groupBox3.Controls.Add(this.label3);
             this.groupBox3.Controls.Add(this.button7);
             this.groupBox3.Controls.Add(this.button6);
@@ -368,7 +371,7 @@
             // 
             this.positionDialog.bid = null;
             this.positionDialog.cancel = false;
-            this.positionDialog.ClientSize = new System.Drawing.Size(245, 311);
+            this.positionDialog.ClientSize = new System.Drawing.Size(237, 300);
             this.positionDialog.Location = new System.Drawing.Point(400, 400);
             this.positionDialog.MaximizeBox = false;
             this.positionDialog.MaximumSize = new System.Drawing.Size(253, 338);
@@ -378,6 +381,13 @@
             this.positionDialog.Text = "坐标配置";
             this.positionDialog.url = null;
             this.positionDialog.Visible = false;
+            // 
+            // numericUpDown1
+            // 
+            this.numericUpDown1.Location = new System.Drawing.Point(271, 12);
+            this.numericUpDown1.Name = "numericUpDown1";
+            this.numericUpDown1.Size = new System.Drawing.Size(70, 20);
+            this.numericUpDown1.TabIndex = 13;
             // 
             // Form1
             // 
@@ -410,6 +420,7 @@
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -447,6 +458,7 @@
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.NumericUpDown numericUpDown1;
     }
 }
 

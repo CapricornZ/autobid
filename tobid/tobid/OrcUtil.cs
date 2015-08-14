@@ -13,30 +13,34 @@ namespace tobid.util.orc
     /// </summary>
     public class CaptchaUtil
     {
-        private OrcUtil orcTips, orcNo;
-        public CaptchaUtil(OrcUtil tips, OrcUtil no)
+        private OrcUtil[] orcTips;
+        private OrcUtil orcNo;
+        public CaptchaUtil(OrcUtil tips0, OrcUtil tips1, OrcUtil no)
         {
             this.orcNo = no;
-            this.orcTips = tips;
+            this.orcTips = new OrcUtil[]{ tips0, tips1 };
         }
+
         private List<Bitmap> subImgs;
         public List<Bitmap> SubImgs { get { return this.subImgs; } }
 
         public String getActive(String captcha, Bitmap bitmapTips)
         {
-            String tips = this.orcTips.getCharFromPic(bitmapTips, 0, 0);
+            int indexTips = 0;
+            String tips = this.orcTips[indexTips].getCharFromPic(bitmapTips, 0, 0);
             String numbers = "";
             if (tips.StartsWith("请输入"))
                 numbers = this.orcNo.getCharFromPic(bitmapTips);
             else
             {
-                tips = this.orcTips.getCharFromPic(bitmapTips, x:20);
+                indexTips++;
+                tips = this.orcTips[indexTips].getCharFromPic(bitmapTips, x: 20);
                 numbers = this.orcNo.getCharFromPic(bitmapTips, x:20);
             }
 
             this.subImgs = new List<Bitmap>();
-            for (int i = 0; i < this.orcTips.SubImgs.Count; i++)
-                this.subImgs.Add(this.orcTips.SubImgs[i]);
+            for (int i = 0; i < this.orcTips[indexTips].SubImgs.Count; i++)
+                this.subImgs.Add(this.orcTips[indexTips].SubImgs[i]);
             for (int i = 0; i < this.orcNo.SubImgs.Count; i++)
                 this.subImgs.Add(this.orcNo.SubImgs[i]);
 

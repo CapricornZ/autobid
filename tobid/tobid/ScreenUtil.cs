@@ -85,6 +85,66 @@ namespace tobid.util
             return bytes;
         }
 
+        public Bitmap subImage(Bitmap bitmap){
+            
+            Point point = scan(bitmap);
+            Rectangle cloneRect = new Rectangle(point.X, point.Y, bitmap.Width - point.X, bitmap.Height - point.Y);
+            Bitmap subImg = bitmap.Clone(cloneRect, bitmap.PixelFormat);
+            return subImg;
+        }
+
+        public static Boolean isWhite(Color color)
+        {
+            float brightness = color.GetBrightness();
+            float hue = color.GetHue();
+            float saturation = color.GetSaturation();
+            System.Console.WriteLine(String.Format("R:{0}, G:{1}, B:{2}, {{bright:{3}, hue:{4}, sa:{5}}}", color.R, color.G, color.B, brightness, hue, saturation));
+            return ((color.R >225 && color.G > 225));
+            //return (brightness > 0.8 && hue > 0.8) || (color.R > 225 && color.G > 225);
+        }
+
+        public static Point scan(Bitmap bitmap)
+        {
+            Point p = new Point();
+            Boolean bFound = false;
+            for (int x = 0; !bFound && x < bitmap.Width; x++)
+            {
+                int countWhite = 0;
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    Color color = bitmap.GetPixel(x, y);
+                    if (isWhite(color))
+                        countWhite++;
+                }
+                System.Console.WriteLine("COUNT:" + countWhite);
+                if (countWhite != bitmap.Height)
+                {
+                    bFound = true;
+                    p.X = x;
+                }
+            }
+
+            bFound = false;
+            for (int x = 0; !bFound && x < bitmap.Height; x++)
+            {
+                int countWhite = 0;
+                for (int y = p.Y+1; y < 15; y++)
+                {
+                    Color color = bitmap.GetPixel(y, x);
+                    
+                    //System.Console.WriteLine("B:" + brightness);
+                    if (isWhite(color))
+                        countWhite++;
+                }
+                if (countWhite != 15)
+                {
+                    bFound = true;
+                    p.Y = x;
+                }
+            }
+            return p;
+        }
+
         /// <summary>  
         /// 判断图形里是否存在另外一个图形 并返回所在位置  
         /// </summary>  

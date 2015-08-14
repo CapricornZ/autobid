@@ -17,7 +17,7 @@ namespace tobid.util
         String tag { get; }
         OrcUtil Price { get; }
         OrcUtil Loading { get; }
-        OrcUtil Tips { get; }
+        OrcUtil[] Tips { get; }
         OrcUtil TipsNo { get; }
     }
 
@@ -26,7 +26,7 @@ namespace tobid.util
         private static log4net.ILog logger = log4net.LogManager.GetLogger(typeof(Resource));
         private orc.OrcUtil m_price;
         private orc.OrcUtil m_loading;
-        private orc.OrcUtil m_tips;
+        private orc.OrcUtil[] m_tips;
         private orc.OrcUtil m_tipsNo;
         private String m_tag;
 
@@ -105,7 +105,10 @@ namespace tobid.util
 
             rtn.m_tag = global.tag;
             rtn.m_price = OrcUtil.getInstance(global.price, dictPrice);
-            rtn.m_tips = OrcUtil.getInstance(global.tips, dictTips);
+            rtn.m_tips = new OrcUtil[]{
+                OrcUtil.getInstance(global.tips0, dictTips),
+                OrcUtil.getInstance(global.tips1, dictTips)
+            };
             rtn.m_tipsNo = OrcUtil.getInstance(global.tipsNo, dictTipsNo);
             rtn.m_loading = OrcUtil.getInstance(global.loading, dictLoading);
             return rtn;
@@ -114,7 +117,7 @@ namespace tobid.util
         public String tag { get { return this.m_tag; } }
         public OrcUtil Price { get { return this.m_price; } }
         public OrcUtil Loading { get { return this.m_loading; } }
-        public OrcUtil Tips { get { return this.m_tips; } }
+        public OrcUtil[] Tips { get { return this.m_tips; } }
         public OrcUtil TipsNo { get { return this.m_tipsNo; } }
     }
 }
